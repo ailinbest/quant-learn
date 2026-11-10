@@ -7,7 +7,7 @@
   <meta name="description" content="逐行拆解 Freqtrade Strategy001：EMA、Heikin-Ashi、交易信号与风险控制的交互学习手册。">
   <title>Strategy001 · 策略研习室</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%234e5bd5'/%3E%3Cpath d='M10 27V16m10 8V8m10 24V19' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=2.2">
+  <link rel="stylesheet" href="styles.css?v=2.3">
   <script defer src="model.js?v=2.2"></script><script defer src="catalog.js?v=2.2"></script><script defer src="app.js?v=2.2"></script><script defer src="learning-model.js?v=2.2"></script><script defer src="library.js?v=2.2"></script>
 </head>
 <body>
@@ -60,7 +60,59 @@
   <section id="indicators" class="section">
     <div class="section-heading"><div><span class="eyebrow">03 / THE BUILDING BLOCKS</span><h2>两种指标，各司其职。</h2></div><a class="subtle-link" href="https://ta-lib.org/functions/ema.html" target="_blank" rel="noreferrer">TA-Lib 指标文档 ↗</a></div>
     <div class="indicator-grid"><div class="panel indicator-card"><div class="card-kicker"><span class="square-icon">∿</span><span>01 / 趋势的速度</span><span class="pill">TA-Lib</span></div><h3>EMA <small>指数移动平均</small></h3><p>越新的收盘价，权重越高。短周期先转向，长周期慢确认；两者的相对位置反映近期价格相对长期均值的变化。</p><div class="formula">α = 2 / (N + 1)<br>EMA<sub>t</sub> = α · Close<sub>t</sub> + (1 − α) · EMA<sub>t−1</sub></div><div class="ema-roles"><div><i class="line20"></i><strong>EMA20</strong><span>α ≈ 9.52%</span><small>100 分钟 · 入场交叉与价格过滤</small></div><div><i class="line50"></i><strong>EMA50</strong><span>α ≈ 3.92%</span><small>250 分钟 · 连接两组交叉条件</small></div><div><i class="line100"></i><strong>EMA100</strong><span>α ≈ 1.98%</span><small>500 分钟 · 仅参与卖出交叉</small></div></div><details><summary>初始化与手算示例</summary><p>TA-Lib 默认兼容模式以最初 N 个收盘价的简单平均值作为首个 EMA；此前数值不可用。假设上一根 EMA20 = 100，本根收盘 = 102，则新 EMA20 = 100 + (102 − 100) × 2/21 ≈ 100.1905。</p><p>100 / 250 / 500 分钟是 N 根 K 线对应的名义跨度；EMA 是递推值，更早的数据仍有衰减权重，并非只看最近 N 根。</p></details></div>
-    <div class="panel indicator-card"><div class="card-kicker"><span class="square-icon mint">▥</span><span>02 / 蜡烛的方向</span><span class="pill">QTPyLib</span></div><h3>Heikin-Ashi <small>平均 K 线</small></h3><p>把原始 OHLC 平滑为新的蜡烛，减少短期颜色变化。这里用 HA 收盘价的位置和阴阳线方向，确认均线信号。</p><div class="formula">HA Close<sub>t</sub> = (O<sub>t</sub> + H<sub>t</sub> + L<sub>t</sub> + C<sub>t</sub>) / 4<br>HA Open<sub>t</sub> = (HA Open<sub>t−1</sub> + HA Close<sub>t−1</sub>) / 2</div><div class="ha-directions"><div><span class="candle-symbol up"></span><strong>阳线</strong><code>HA Close &gt; HA Open</code><small>买入过滤条件</small></div><div><span class="candle-symbol down"></span><strong>阴线</strong><code>HA Close &lt; HA Open</code><small>卖出过滤条件</small></div></div><details><summary>第一根如何计算？它是真实价格吗？</summary><p>第一根 HA Open = (原始 Open + Close) / 2。HA High 取原始 High、HA Open、HA Close 的最大值；HA Low 取对应最小值。策略只读取 HA Open / Close，图表额外计算高低点以绘图。</p><p>例如 O=100、H=104、L=98、C=102，则 HA Close=101；若前一根 HA Open=99、HA Close=100，则本根 HA Open=99.5，为阳线。HA 价格是合成值，不是可直接成交的报价。两者相等时既不满足阳线也不满足阴线条件。</p></details></div></div>
+    <div class="panel indicator-card"><div class="card-kicker"><span class="square-icon mint">▥</span><span>02 / 蜡烛的方向</span><span class="pill">QTPyLib</span></div><h3>Heikin-Ashi <small>平均 K 线</small></h3><p>把原始 OHLC 平滑为新的蜡烛，减少短期颜色变化。这里用 HA 收盘价的位置和阴阳线方向，确认均线信号。</p><div class="formula">HA Close<sub>t</sub> = (O<sub>t</sub> + H<sub>t</sub> + L<sub>t</sub> + C<sub>t</sub>) / 4<br>HA Open<sub>t</sub> = (HA Open<sub>t−1</sub> + HA Close<sub>t−1</sub>) / 2</div><div class="ha-directions"><div><span class="candle-symbol up"></span><strong>阳线</strong><code>HA Close &gt; HA Open</code><small>买入过滤条件</small></div><div><span class="candle-symbol down"></span><strong>阴线</strong><code>HA Close &lt; HA Open</code><small>卖出过滤条件</small></div></div><details id="ha-guide" class="ha-guide">
+      <summary>深入理解 Heikin-Ashi <span class="ha-guide-action" aria-hidden="true"><span class="ha-expand">展开 ＋</span><span class="ha-collapse">收起 −</span></span></summary>
+      <div class="ha-guide-body">
+        <div class="ha-guide-section">
+          <h4>01 · 它在平均什么？</h4>
+          <p>普通 K 线记录这一根的真实开、高、低、收；HA 用这些价格重新构造一根蜡烛。<strong>HA Close 平均本根四个价格，HA Open 则继承前一根 HA 实体的中点。</strong>它把当前价格与过去状态联系起来，让方向更连贯。</p>
+          <p>这里没有像 EMA20 那样的“20 根周期”参数；每根原始 K 线对应一根 HA。Strategy001 使用 5 分钟 K 线，所以一根 HA 仍对应 5 分钟，并没有把多根 K 线合并成一根。</p>
+        </div>
+        <div class="ha-guide-section">
+          <h4>02 · 四个价格，按顺序计算</h4>
+          <p>下面的 O、H、L、C 都来自<strong>本根原始 K 线</strong>；下标 t−1 表示前一根。</p>
+          <div class="formula ha-guide-formula">HA Close<sub>t</sub> = (O<sub>t</sub> + H<sub>t</sub> + L<sub>t</sub> + C<sub>t</sub>) / 4<br>HA Open<sub>t</sub> = (HA Open<sub>t−1</sub> + HA Close<sub>t−1</sub>) / 2<br>HA High<sub>t</sub> = max(H<sub>t</sub>, HA Open<sub>t</sub>, HA Close<sub>t</sub>)<br>HA Low<sub>t</sub> = min(L<sub>t</sub>, HA Open<sub>t</sub>, HA Close<sub>t</sub>)</div>
+          <p><strong>第一根要单独初始化：</strong>没有前一根 HA 时，HA Open₀ = (O₀ + C₀) / 2；其余三个值仍按上面的规则算。第二根起，必须使用上一根的 <em>HA</em> Open / Close，不能误用上一根的原始 O / C。</p>
+          <p>由于 HA Open 带着历史状态，HA High / Low 可能超出本根原始价格区间。这是合成蜡烛的包络，不表示市场真的在那个价位成交。<a href="https://github.com/freqtrade/technical/blob/main/technical/vendor/qtpylib/indicators.py" target="_blank" rel="noreferrer">核对 QTPyLib 维护分支的计算实现 ↗</a></p>
+        </div>
+        <div class="ha-guide-section">
+          <h4>03 · 连算三根，看清“原始阴线、HA 阳线”</h4>
+          <p>以下是独立的手算样例，价格单位任意；从第 1 根开始初始化，未加入 EMA 或交易信号。</p>
+          <ol class="ha-example-steps">
+            <li><strong>第 1 根 · 建立起点</strong><p>原始 O/H/L/C = 100 / 104 / 98 / 102。<br>HA Close = 404 / 4 = <b>101</b>；HA Open = 202 / 2 = <b>101</b>。<br>HA High = 104，HA Low = 98；开收相等，既不满足策略的 HA 阳线条件，也不满足阴线条件。</p></li>
+            <li><strong>第 2 根 · 递推开始</strong><p>原始 O/H/L/C = 102 / 108 / 101 / 106。<br>HA Close = 417 / 4 = <b>104.25</b>；HA Open = (101 + 101) / 2 = <b>101</b>。<br>HA High = 108，HA Low = 101；104.25 &gt; 101，为 HA 阳线。</p></li>
+            <li><strong>第 3 根 · 两种蜡烛颜色不同</strong><p>原始 O/H/L/C = 106 / 107 / 103 / 104，104 &lt; 106，所以原始 K 线是阴线。<br>HA Close = 420 / 4 = <b>105</b>；HA Open = (101 + 104.25) / 2 = <b>102.625</b>。<br>HA High = 107，HA Low = 102.625；105 &gt; 102.625，所以 HA 仍是阳线，且 HA Low 低于真实最低价 103。</p></li>
+          </ol>
+          <p>这解释了为什么 HA 常能忽略一次小回落，也说明它可能较晚才反映转弱。HA 阳线不等于这一根真实价格上涨，更不等于下一根会涨。</p>
+        </div>
+        <div class="ha-guide-section">
+          <h4>04 · 实体与影线，通常怎样读？</h4>
+          <ul class="ha-reading-list">
+            <li><strong>连续阳线、实体较长、少下影：</strong>常用于观察上行动量是否持续；下行时可反过来看连续阴线与少上影。</li>
+            <li><strong>实体变小、上下都有影线：</strong>说明平滑后的方向感减弱，可留意整理或转向；单根小实体不能确认反转。</li>
+            <li><strong>阴阳切换：</strong>说明 HA Close 与 HA Open 的相对位置变化。在震荡中也会频繁换色，需要结合其他条件。</li>
+          </ul>
+          <p>这些是一般读图思路，<strong>Strategy001 并没有检查实体长度、影线长度或连续几根同色</strong>。不能把它们当成这份代码已经实现的规则。<a href="https://chartschool.stockcharts.com/table-of-contents/chart-analysis/chart-types/heikin-ashi-candlesticks" target="_blank" rel="noreferrer">延伸阅读：StockCharts 的 HA 图表说明 ↗</a></p>
+        </div>
+        <div class="ha-guide-section">
+          <h4>05 · 在 Strategy001 里，它只负责过滤</h4>
+          <p><strong>买入：</strong>EMA20 本根刚上穿 EMA50，同时 HA Close &gt; EMA20、HA Close &gt; HA Open。HA 用“位置 + 方向”确认均线信号。</p>
+          <p><strong>卖出信号：</strong>EMA50 本根刚上穿 EMA100，同时 HA Close &lt; EMA20、HA Close &lt; HA Open；实际信号退出还受到盈利门槛限制。</p>
+          <p>EMA20 / 50 / 100 始终使用<strong>原始 Close</strong>计算，不是 HA Close。这份策略只读取 HA Open / Close，没有用 HA High / Low 设置止损，也不会只因 HA 变红就卖出。</p>
+        </div>
+        <div class="ha-guide-section">
+          <h4>06 · 优点、代价与使用边界</h4>
+          <ul class="ha-reading-list">
+            <li><strong>适合观察方向：</strong>趋势较连贯时，平滑能减少颜色干扰；它不保证过滤掉所有假信号。</li>
+            <li><strong>代价是滞后：</strong>急涨急跌或转折时，历史状态可能让旧方向继续保留；横盘中仍可能反复切换。</li>
+            <li><strong>合成价格不能当成交价：</strong>不能拿 HA 开收价直接假设买卖成交，也不能把 HA 影线当作真实止损触价证据。</li>
+            <li><strong>收盘前仍会变化：</strong>当前 H、L、C 尚未定型，HA Close 和颜色也可能变。这里按已完成 K 线判断；固定历史数据下，递推只用当前及过去信息。</li>
+            <li><strong>起算位置会影响早期结果：</strong>按上述递推，初始 HA Open 的差异每向后一步减半。对比图表时应对齐原始数据、时间周期与初始化方式。</li>
+          </ul>
+        </div>
+        <div class="ha-guide-practice"><strong>回到图里试一次</strong><p>在<a href="#lab">K 线实验室</a>选择“下跌与止损”，勾选“显示 HA 蜡烛”，再取消勾选。比较同一位置两种蜡烛的颜色和影线：切换只改变显示，EMA、原始 OHLC 读数和信号条件保持不变。信号检查器始终使用 HA 方向判断。</p></div>
+      </div>
+    </details></div></div>
     <div class="inline-note">指标归类：此策略的 <code>ta.EMA</code> 属于 TA-Lib 的 <strong>Overlap Studies（重叠研究）</strong>，不是 Math Transform。<code>heikinashi</code> 和 <code>crossed_above</code> 在这份源码中来自 QTPyLib。</div>
   </section>
 

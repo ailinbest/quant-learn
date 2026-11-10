@@ -904,6 +904,23 @@ summary {
 details p {
   margin-top:10px
 }
+/* HA deep dive stays inside its existing card and is collapsed on first load. */
+.ha-guide>summary {color:var(--blue);}
+.ha-guide-action {float:right;margin-left:8px;font-size:11px;white-space:nowrap;}
+.ha-guide .ha-collapse,.ha-guide[open] .ha-expand {display:none;}
+.ha-guide[open] .ha-collapse {display:inline;}
+.ha-guide-body {min-width:0;overflow-wrap:anywhere;}
+.ha-guide-section {margin-top:22px;}
+.ha-guide-section h4 {font-size:13px;color:var(--text);line-height:1.7;}
+.ha-guide-body p {font-size:12px;}
+.ha-guide-body strong,.ha-example-steps b {color:var(--text);font-weight:600;}
+.ha-guide-formula {white-space:normal;overflow-wrap:anywhere;line-height:2.1;}
+.ha-example-steps {margin:14px 0 0;padding-left:23px;font-size:12px;color:var(--muted);}
+.ha-example-steps li {padding-left:3px;margin-top:15px;}
+.ha-example-steps p {margin-top:5px;}
+.ha-reading-list {margin:10px 0 0;padding-left:18px;color:var(--ink-secondary, #6f7c91);font-size:12px;line-height:1.95;}
+.ha-reading-list li+li {margin-top:9px;}
+.ha-guide-practice {margin-top:22px;padding:14px;border-radius:6px;background:var(--inset-bg, #f6f7fb);font-size:12px;}
 .ha-directions {
   display:grid;
   grid-template-columns:1fr 1fr;
