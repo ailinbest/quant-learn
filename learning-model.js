@@ -14,7 +14,7 @@ function series(mode='reversal'){
  const close=Array.from({length:320},(_,i)=>{let t=i-200;return i<200?108-i*.03+.25*Math.sin(i/4):mode==='range'?102+2.5*Math.sin(t/6)+.3*Math.sin(t*2):mode==='fall'?102-t*.1+1.3*Math.sin(t/6):102+(t<45?-t*.09:-4.05+(t-45)*.2)+.8*Math.sin(t/4);});
  return close.map((c,i)=>{const o=i?close[i-1]:c+.1;return {index:i,open:o,high:Math.max(c,o)+.23+.18*(1+Math.sin(i*1.3)),low:Math.min(c,o)-.23-.12*(1+Math.cos(i*.7)),close:c,volume:100+40*(1+Math.sin(i*.4))+(i%23===0?180:0)};});
 }
-const colors=['#dfa150','#7280dd','#b68acb','#269c84'];
+const colors=['var(--chart-gold, #dfa150)','var(--chart-blue, #7280dd)','var(--chart-purple, #b68acb)','var(--chart-up, #269c84)'];
 function calculate(kind,mode='reversal'){
  const rows=series(mode),c=rows.map(r=>r.close), overlays=[],oscillators=[];let label='', thresholds=[];
  const line=(label,data,color,points=false)=>({label,data,color,points});
@@ -26,7 +26,7 @@ function calculate(kind,mode='reversal'){
  else {if(kind==='ema')overlays.push(line('EMA20',ema(c,20),colors[0]),line('EMA50',ema(c,50),colors[1]),line('EMA100',ema(c,100),colors[2]));
  if(kind==='rsi'){oscillators.push(line('RSI14',rsi(c),colors[1]));thresholds=[30,70];label='教学参数：Wilder RSI14；30 / 70 仅是参考线，请对照本策略阈值';}
  else if(kind==='macd'){const fast=ema(c,12),slow=ema(c,26),macd=c.map((_,i)=>valid(slow[i])?fast[i]-slow[i]:null),sig=ema(macd,9);oscillators.push(line('MACD(12,26)',macd,colors[0]),line('Signal9',sig,colors[1]),line('Histogram',macd.map((v,i)=>valid(sig[i])?v-sig[i]:null),colors[3]));thresholds=[0];label='教学参数：12 / 26 / 9；各 EMA 独立 SMA 初始化，非 TA-Lib MACD 种子逐位复现';}
- else if(kind==='adx'){const a=adx(rows);oscillators.push(line('+DI14',a.plus,colors[3]),line('−DI14',a.minus,'#d26467'),line('ADX14',a.adx,colors[1]));thresholds=[25];label='教学参数：Wilder ADX14；25 仅为强度参考，ADX 本身没有多空方向';}
+ else if(kind==='adx'){const a=adx(rows);oscillators.push(line('+DI14',a.plus,colors[3]),line('−DI14',a.minus,'var(--chart-down, #d26467)'),line('ADX14',a.adx,colors[1]));thresholds=[25];label='教学参数：Wilder ADX14；25 仅为强度参考，ADX 本身没有多空方向';}
  else label='教学参数：原始 Close 的 EMA20 / 50 / 100；策略实际周期见公式卡与参数表';}
  return {rows,overlays,oscillators,label,thresholds};
 }

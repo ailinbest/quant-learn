@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 PUBLIC_FILES = (
-    'index.html', 'styles.css', 'app.js', 'catalog.js',
+    'index.html', 'styles.css', 'theme.js', 'app.js', 'catalog.js',
     'model.js', 'learning-model.js', 'library.js', 'LICENSE',
 )
 

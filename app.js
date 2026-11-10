@@ -32,7 +32,7 @@
     svg.append(svgNode('title', {}, '使用下方滑块或左右按钮逐根查看 K 线条件'));
     for (let i = 0; i <= 4; i++) {
       const value = lo + (hi - lo) * i / 4, py = y(value);
-      svg.append(svgNode('line', {x1:left,y1:py,x2:right,y2:py,stroke:'#edf0f5','stroke-dasharray':'3 4'}), svgNode('text', {x:right + 7,y:py + 3}, value.toFixed(1)));
+      svg.append(svgNode('line', {x1:left,y1:py,x2:right,y2:py,stroke:'var(--chart-grid, #edf0f5)','stroke-dasharray':'3 4'}), svgNode('text', {x:right + 7,y:py + 3}, value.toFixed(1)));
     }
     for (let i = 240; i < 380; i += width < 450 ? 35 : 25) {
       svg.append(svgNode('text', {x:x(i),y:height - 8,'text-anchor':i === 240 ? 'start':'middle'},time(i)));
@@ -41,31 +41,31 @@
     for (const r of rows) {
       const o = state.ha ? r.haOpen : r.open, c = state.ha ? r.haClose : r.close;
       const h = state.ha ? r.haHigh : r.high, l = state.ha ? r.haLow : r.low;
-      const color = c >= o ? '#50a78e' : '#d88587';
+      const color = c >= o ? 'var(--chart-up, #50a78e)' : 'var(--chart-down, #d88587)';
       svg.append(svgNode('line', {x1:x(r.index),x2:x(r.index),y1:y(h),y2:y(l),stroke:color,'stroke-width':.8}));
       svg.append(svgNode('rect', {x:x(r.index)-candleWidth/2,y:Math.min(y(o),y(c)),width:candleWidth,height:Math.max(1,Math.abs(y(c)-y(o))),fill:color,rx:.3}));
     }
-    const colors = {ema20:'#dca256',ema50:'#7584da',ema100:'#b68acc'};
+    const colors = {ema20:'var(--chart-gold, #dca256)',ema50:'var(--chart-blue, #7584da)',ema100:'var(--chart-purple, #b68acc)'};
     for (const key of state.lines) {
       const path = rows.filter(r=>Number.isFinite(r[key])).map((r,i)=>`${i?'L':'M'}${x(r.index).toFixed(2)},${y(r[key]).toFixed(2)}`).join(' ');
       svg.append(svgNode('path',{d:path,fill:'none',stroke:colors[key],'stroke-width':1.6}));
     }
     if (state.scenario === 'stop') {
-      svg.append(svgNode('line', {x1:left,x2:right,y1:y(90),y2:y(90),stroke:'#d48085','stroke-width':1,'stroke-dasharray':'5 4'}));
-      svg.append(svgNode('text',{x:left+8,y:y(90)-7,style:'fill:#c5737a;font-size:9px'},'假设入场 100 → 止损参考 90'));
+      svg.append(svgNode('line', {x1:left,x2:right,y1:y(90),y2:y(90),stroke:'var(--chart-down, #d48085)','stroke-width':1,'stroke-dasharray':'5 4'}));
+      svg.append(svgNode('text',{x:left+8,y:y(90)-7,style:'fill:var(--chart-down, #c5737a);font-size:9px'},'假设入场 100 → 止损参考 90'));
     }
     for (const r of rows.filter(r=>r.entry||r.exit)) {
       const isEntry = r.entry;
       const py = isEntry ? y(state.ha ? r.haLow : r.low)+14 : y(state.ha ? r.haHigh : r.high)-14;
-      const color = isEntry ? '#398f77':'#c47078';
+      const color = isEntry ? 'var(--chart-buy-label, #398f77)':'var(--chart-sell-label, #c47078)';
       svg.append(svgNode('rect',{x:x(r.index)-7,y:py-8,width:14,height:15,rx:4,fill:color}));
       svg.append(svgNode('text',{x:x(r.index),y:py+3,'text-anchor':'middle',style:'fill:white;font-size:8px;font-weight:600'},isEntry?'B':'S'));
     }
     const current = state.rows[state.index];
-    svg.append(svgNode('line',{x1:x(state.index),x2:x(state.index),y1:top-9,y2:bottom+6,stroke:'#8e9ab5','stroke-width':1,'stroke-dasharray':'3 3'}));
-    svg.append(svgNode('circle',{cx:x(state.index),cy:y(current.close),r:3,fill:'#fff',stroke:'#6474c3','stroke-width':1.5}));
+    svg.append(svgNode('line',{x1:x(state.index),x2:x(state.index),y1:top-9,y2:bottom+6,stroke:'var(--chart-cursor, #8e9ab5)','stroke-width':1,'stroke-dasharray':'3 3'}));
+    svg.append(svgNode('circle',{cx:x(state.index),cy:y(current.close),r:3,fill:'var(--surface-bg, #fff)',stroke:'var(--chart-blue, #6474c3)','stroke-width':1.5}));
     const tagX = Math.max(0, Math.min(width - 48, x(state.index) - 22));
-    svg.append(svgNode('rect',{x:tagX,y:2,width:44,height:17,rx:4,fill:'#eef0f9'}),svgNode('text',{x:tagX+22,y:14,'text-anchor':'middle',style:'fill:#7783ae;font-size:9px'},time(state.index)));
+    svg.append(svgNode('rect',{x:tagX,y:2,width:44,height:17,rx:4,fill:'var(--inset-bg, #eef0f9)'}),svgNode('text',{x:tagX+22,y:14,'text-anchor':'middle',style:'fill:var(--ink-accent, #7783ae);font-size:9px'},time(state.index)));
     function selectAt(event) {
       const box = svg.getBoundingClientRect();
       state.index = Math.max(240, Math.min(379, 240 + Math.floor(((event.clientX-box.left)*width/box.width-left)/(right-left)*count)));

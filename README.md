@@ -12,6 +12,8 @@ python3 -m http.server 8765 --bind 127.0.0.1
 
 打开 <http://127.0.0.1:8765>，也可直接双击 `index.html`。可用 `?strategy=futures/FAdxSmaStrategy` 等地址直接定位某篇；章节锚点和浏览器前进后退可用。
 
+顶部「夜间模式」可切换明暗配色，包含图表、参数表和源码弹窗。首次访问跟随系统主题，手动选择后自动记住；刷新页面、切换策略和再次打开都会保留选择。浏览器禁用本地存储时仍可切换，但不会跨访问保存。
+
 ## 覆盖范围
 
 | 目录 | 篇数 | 内容 |
@@ -41,6 +43,7 @@ python3 -m http.server 8765 --bind 127.0.0.1
 - `index.html` / `app.js` / `model.js`：保留 Strategy001 专用内容与实验。
 - `library.js` / `learning-model.js`：全库切换、搜索、章节生成、参数/源码展示与通用教学图表。
 - `styles.css`：桌面与手机样式。
+- `theme.js`：首屏主题初始化、夜间模式切换与本地偏好保存。
 
 修改某份解读时，编辑其 JSON 条目，再运行：
 

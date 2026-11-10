@@ -2,11 +2,13 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark"><meta name="theme-color" content="#f7f8fa">
+  <script src="theme.js?v=2.2"></script>
   <meta name="description" content="逐行拆解 Freqtrade Strategy001：EMA、Heikin-Ashi、交易信号与风险控制的交互学习手册。">
   <title>Strategy001 · 策略研习室</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%234e5bd5'/%3E%3Cpath d='M10 27V16m10 8V8m10 24V19' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=2.1">
-  <script defer src="model.js?v=2.1"></script><script defer src="catalog.js?v=2.1"></script><script defer src="app.js?v=2.1"></script><script defer src="learning-model.js?v=2.1"></script><script defer src="library.js?v=2.1"></script>
+  <link rel="stylesheet" href="styles.css?v=2.2">
+  <script defer src="model.js?v=2.2"></script><script defer src="catalog.js?v=2.2"></script><script defer src="app.js?v=2.2"></script><script defer src="learning-model.js?v=2.2"></script><script defer src="library.js?v=2.2"></script>
 </head>
 <body>
 <a class="skip-link" href="#main">跳到正文</a>
@@ -29,7 +31,7 @@
   <div class="sidebar-bottom"><span class="book-icon">↗</span><strong>从规则，读懂交易。</strong><p>基于仓库源码的交互式学习笔记</p><span>FREQTRADE / INTERFACE V3</span></div>
 </aside>
 <div class="workspace">
-  <header class="topbar"><div><span class="muted">策略库</span><span class="slash">/</span><strong id="breadcrumb">Strategy001</strong></div><div class="top-actions"><span class="draft-label">学习手册 · 完整策略库</span><button class="text-button" id="source-button">〈/〉 查看源码</button></div></header>
+  <header class="topbar"><div><span class="muted">策略库</span><span class="slash">/</span><strong id="breadcrumb">Strategy001</strong></div><div class="top-actions"><button type="button" id="theme-toggle" class="theme-toggle" aria-label="夜间模式" aria-pressed="false" title="切换到夜间模式"><span aria-hidden="true">☾</span> 夜间模式</button><span class="draft-label">学习手册 · 完整策略库</span><button class="text-button" id="source-button">〈/〉 查看源码</button></div></header>
   <main id="main">
   <article id="strategy-lesson" hidden></article>
   <article id="lesson">
