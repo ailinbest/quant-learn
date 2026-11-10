@@ -1,0 +1,2743 @@
+[
+  {
+    "id": "AlmgrenChrissStrategy",
+    "title": "波动与冲击代理驱动的非等额拆单",
+    "category": "执行示例",
+    "summary": "沿用TWAP的15m RSI方向、10片及1分钟最小间隔，但用κ控制先大后小的资金分配。κ来自价格波动、K线高低差与成交量的代理估计；这是启发式Almgren–Chriss执行示例，不等于校准过的最优订单簿模型。",
+    "entry": [
+      {
+        "label": "示例方向",
+        "detail": "RSI14<45且volume>0做多，RSI14>55且volume>0做空。"
+      },
+      {
+        "label": "首单比例",
+        "detail": "f(m,κ)=1−sinh(κ(m−1))/sinh(κm)，m=10；κ≤1e−12时f=1/m。首单=建议stake×f。κ大时更前置，不是每份相同。"
+      },
+      {
+        "label": "后续重算",
+        "detail": "每次读取最新κ，以首片实际stake/当前f(10,κ)反推目标总资金，再把剩余资金×f(剩余片数,κ)作为下一片；小于min_stake则跳过。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "开始与持续退出",
+        "detail": "多头RSI>55或空头RSI<45开始分批退；任一exit成交后继续退出，未完成订单则暂停。"
+      },
+      {
+        "label": "比例平仓",
+        "detail": "剩余stake×f(剩余片数,最新κ)取负；末片全部退出。首片可立即执行，后续至少距上次实际成交1分钟。"
+      },
+      {
+        "label": "独立整仓条件",
+        "detail": "ROI2%与−10%止损可先于拆分完成触发。"
+      }
+    ],
+    "risk": [
+      "15m、can_short=True、position_adjustment_enable=True；只适合支持做空的配置。",
+      "startup30小于波动窗口96，早期κ可能走0.6回退值；不是96根数据已经齐全。",
+      "回调有min_stake检查但未显式裁剪max_stake；资金可用性及引擎边界需核查。"
+    ],
+    "indicators": [
+      {
+        "key": "RSI",
+        "usage": "TA-Lib默认14期，15m示例方向。",
+        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。"
+      },
+      {
+        "key": "AC_KAPPA",
+        "usage": "自定义κ；vol_window96，λ0.01，eta_fraction0.01，gamma_fraction0.1，κ缺省0.6、上限5。",
+        "formula": "σ=std96(close)，S=mean96(high−low)，V=mean96(volume)，τ=1/15；η=S/(0.01V)，γ=S/(0.1V)，η̃=η−0.5γτ（若≤0回退η）；σ_τ=σ√τ；κ=acosh(1+0.5×(λσ_τ²/η̃)×τ²)/τ，上限5，缺失填0.6。"
+      },
+      {
+        "key": "EXECUTION",
+        "usage": "双曲正弦剩余仓位切片，非TA-Lib。",
+        "formula": "f(m,κ)=1−sinh(κ(m−1))/sinh(κm)；κ→0时f→1/m；m≤1时f=1。κ=0.6,m=10首片约45.1%，而等额TWAP是10%。"
+      }
+    ],
+    "strengths": [
+      "把执行速度与波动/冲击估计联系起来。",
+      "κ趋零可退化到等额TWAP，便于对照。"
+    ],
+    "weaknesses": [
+      "κ每次变化会改变反推总资金，预算没有固定保存。",
+      "K线high−low不是买卖价差，close标准差不是收益波动，模型单位依赖显著。",
+      "回测15m粒度难还原1分钟片段成交。"
+    ],
+    "suitable": [
+      "最优执行思想与分片曲线教学。",
+      "对比等额与前置执行的成本风险权衡。"
+    ],
+    "unsuitable": [
+      "未经校准就宣称最优或低冲击保证。",
+      "依赖固定总预算但不能容忍κ改变预算。"
+    ],
+    "pitfalls": [
+      "λ、η、γ是启发式代理校准，非从实际订单簿冲击回归得到。",
+      "κ=0.6缺省不是轻微倾斜：首片已约45%。",
+      "κ变大使首片比例变大，按首片/当前比例反推目标会缩小；变小会放大目标。"
+    ],
+    "walkthrough": [
+      {
+        "title": "计算代理",
+        "detail": "以96根K线计算σ、S、V，并按1/15缩放时间。"
+      },
+      {
+        "title": "对比分片",
+        "detail": "相同1000建议资金，κ≈0给100，κ0.6首片约451。"
+      },
+      {
+        "title": "观察κ更新",
+        "detail": "新κ导致目标重估，检查总预算是否与最初意图一致。"
+      },
+      {
+        "title": "退出状态",
+        "detail": "反向RSI触发后按最新κ持续递减剩余stake，最后一片全平。"
+      }
+    ],
+    "chart": {
+      "kind": "execution",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "分片图用于展示κ如何前置成交量；不能当作校准后的真实成交计划。"
+    },
+    "status": "example",
+    "sourceNotes": [
+      {
+        "line": 98,
+        "text": "使用价格水平标准差而非收益波动。"
+      },
+      {
+        "line": 115,
+        "text": "κ上限5，缺失0.6。"
+      },
+      {
+        "line": 199,
+        "text": "每次按当前κ重估总资金。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "Bandtastic",
+    "title": "多层布林带与可选过滤",
+    "category": "均值回归",
+    "summary": "15m以典型价20期布林带的1～4倍标准差轨道作为可选触发线。无外部覆盖时买入跌破1σ下轨，卖出涨过2σ上轨且MFI>46。",
+    "entry": [
+      {
+        "label": "默认AND",
+        "detail": "close<1σ下轨 AND volume>0；这是状态，不要求刚跌破。"
+      },
+      {
+        "label": "可选过滤",
+        "detail": "买入RSI<52、MFI<30、EMA211>EMA250三个开关默认均关闭；启用后与主条件AND。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "默认AND",
+        "detail": "close>2σ上轨 AND MFI14>46 AND volume>0。"
+      },
+      {
+        "label": "可选过滤",
+        "detail": "RSI>57、EMA7<EMA6默认关闭；上轨可选1/2/3/4σ。"
+      }
+    ],
+    "risk": [
+      "止损−34.5%；ROI分钟0/69/229/566为16.2%/9.7%/6.1%/0%。",
+      "跟踪开启，正向距离1%、偏移5.8%；only_offset=False，偏移前也可能按基础止损距离跟踪。",
+      "预热999根，外部配置/参数文件可覆盖。"
+    ],
+    "indicators": [
+      {
+        "key": "BBANDS",
+        "usage": "qtpylib典型价20期，1/2/3/4σ上下轨。",
+        "formula": "qtpylib：P=(H+L+C)/3，M=SMA20(P)，s=√[Σ(P−M)²/(n−1)]，上下轨=M±k×s；完整窗口n=20、标准差ddof=1。TA-Lib BBANDS常用close及总体标准差ddof=0，两者不可混作精确复现。"
+      },
+      {
+        "key": "RSI",
+        "usage": "默认14期，买卖可选过滤。",
+        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。"
+      },
+      {
+        "key": "MFI",
+        "usage": "默认14期，默认只有卖出启用。",
+        "formula": "TP=(H+L+C)/3，原始资金流=TP×V；按TP较前一根上升或下降分组，MFI=100−100/(1+N期正向流量和/负向流量和)，默认N=14。"
+      },
+      {
+        "key": "EMA",
+        "usage": "按参数范围预计算；默认买211/250、卖7/6，过滤默认关闭。",
+        "formula": "EMAₜ=α×Pₜ+(1−α)×EMAₜ₋₁，α=2/(N+1)；TA-Lib 以起始N期均值初始化，默认输入close。"
+      }
+    ],
+    "strengths": [
+      "轨道层数直接控制偏离强度。",
+      "过滤开关便于分别检验指标贡献。"
+    ],
+    "weaknesses": [
+      "下轨外可持续下跌。",
+      "34.5%止损对短线反弹较宽。",
+      "卖出EMA7/6的fast名称不保证周期更短。"
+    ],
+    "suitable": [
+      "区间均值回归教学。",
+      "比较1σ与2σ信号频率。"
+    ],
+    "unsuitable": [
+      "强单边下跌。",
+      "要求很小回撤的交易计划。"
+    ],
+    "pitfalls": [
+      "关闭开关的指标仍计算，但不限制交易。",
+      "典型价布林不同于常见close布林。"
+    ],
+    "walkthrough": [
+      {
+        "title": "选轨道",
+        "detail": "观察同一根K线在1σ/2σ下轨的位置。"
+      },
+      {
+        "title": "看开关",
+        "detail": "默认入场不用通过RSI、MFI、EMA条件。"
+      },
+      {
+        "title": "查退出",
+        "detail": "超过2σ上轨还要MFI>46，ROI/跟踪另行检查。"
+      }
+    ],
+    "chart": {
+      "kind": "bbands",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "越深的下轨偏离不等于越高胜率。"
+    },
+    "status": "normal",
+    "sourceNotes": [
+      {
+        "line": 51,
+        "text": "买入三个过滤默认关。"
+      },
+      {
+        "line": 63,
+        "text": "卖出MFI默认开。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/",
+      "https://github.com/freqtrade/technical/blob/main/technical/vendor/qtpylib/indicators.py"
+    ]
+  },
+  {
+    "id": "BreakEven",
+    "title": "停止建仓后的保本清仓示例",
+    "category": "执行示例",
+    "summary": "不生成新买入，只管理已有仓位退出。实际ROI初始为1%，持仓满10分钟后降到0，不能照注释理解成随时零收益清仓。",
+    "entry": [
+      {
+        "label": "禁用买入",
+        "detail": "enter_long设0，没有择时指标。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "ROI阶梯",
+        "detail": "0～10分钟需1%，10分钟后需0；时间从原交易开仓算，不从切换策略算。"
+      },
+      {
+        "label": "止损",
+        "detail": "−5%仍可能亏损退出，不能保证等待回本。"
+      }
+    ],
+    "risk": [
+      "5m，硬止损−5%。",
+      "切换策略会改变已有交易管理规则，应核对实际加载的ROI/止损。"
+    ],
+    "indicators": [
+      {
+        "key": "EXECUTION",
+        "usage": "无TA指标，按持仓时间管理收益门槛。",
+        "formula": "ROI选择时间键≤持仓分钟数的最大键；利润使用交易引擎包含费用的口径。"
+      }
+    ],
+    "strengths": [
+      "适合分开理解建仓和持仓管理。",
+      "时间表简单且可手算。"
+    ],
+    "weaknesses": [
+      "没有发现新机会的能力。",
+      "亏损仓位可能久占资金。",
+      "−5%止损仍可能实现亏损。"
+    ],
+    "suitable": [
+      "已有仓位的停机管理教学。",
+      "比较初始盈利与到时保本目标。"
+    ],
+    "unsuitable": [
+      "独立选币建仓。",
+      "要求到时无条件清空亏损仓位。"
+    ],
+    "pitfalls": [
+      "10分钟后ROI0不等于任何价格都卖。",
+      "保本价需要考虑费用。"
+    ],
+    "walkthrough": [
+      {
+        "title": "计时",
+        "detail": "使用交易原开仓时间。"
+      },
+      {
+        "title": "前10分钟",
+        "detail": "+0.3%尚未满足1%ROI。"
+      },
+      {
+        "title": "满10分钟",
+        "detail": "达到净利润0可ROI退出，触及止损则可能亏损退出。"
+      }
+    ],
+    "chart": {
+      "kind": "execution",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "观察原开仓时点、ROI阶梯与价格路径。"
+    },
+    "status": "example",
+    "sourceNotes": [
+      {
+        "line": 33,
+        "text": "实际初始ROI1%。"
+      },
+      {
+        "line": 34,
+        "text": "10分钟后降为0。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "CustomStoplossWithPSAR",
+    "title": "PSAR止损接口与返回值陷阱",
+    "category": "执行示例",
+    "summary": "1h示例意在用PSAR跟踪止损，入场只用SAR下降占位。现有返回公式实际为−SAR/current_rate，并且live模式未填充守卫依赖的custom_info，不能视作可用PSAR止损实现。",
+    "entry": [
+      {
+        "label": "占位入场",
+        "detail": "SARₜ<SARₜ₋₁，不要求价格上穿SAR。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "普通退出关闭",
+        "detail": "exit_long始终0。"
+      },
+      {
+        "label": "回调实际公式",
+        "detail": "custom_info存在当前pair且有trade时取最后SAR；先算(current_rate−SAR)/current_rate，再减1，得到−SAR/current_rate；其它情况返回1。"
+      }
+    ],
+    "risk": [
+      "基础止损−20%，use_custom_stoploss=True；ROI本类未显式定义。",
+      "例如价100、SAR95返回−95%，预期距离应为−5%；引擎一般不允许旧止损放宽，错误返回也不保证实际扩大到−95%。"
+    ],
+    "indicators": [
+      {
+        "key": "SAR",
+        "usage": "默认0.02/0.2，预热199根。",
+        "formula": "趋势内递推SARₜ=SARₜ₋₁+AF×(EP−SARₜ₋₁)；EP为趋势极值，AF默认从0.02逐步增至0.2；结合前期高低点限幅，突破后翻转。"
+      }
+    ],
+    "strengths": [
+      "展示指标到回调的数据路径。",
+      "PSAR极值加速适合止损设计教学。"
+    ],
+    "weaknesses": [
+      "回调多减1，距离公式有误。",
+      "仅回测/优化填custom_info，live守卫可能不通过。",
+      "SAR下降入场可能发生在空头趋势。"
+    ],
+    "suitable": [
+      "止损接口代码审读与修复。",
+      "绝对价到相对距离转换教学。"
+    ],
+    "unsuitable": [
+      "未经修复即期待PSAR风险保护。",
+      "把占位信号视作有效入场优势。"
+    ],
+    "pitfalls": [
+      "self.dp.runmode未判dp是否存在。",
+      "保存历史表与回调读取最后K线是两套路径。"
+    ],
+    "walkthrough": [
+      {
+        "title": "看点位",
+        "detail": "比较SAR在价格上方或下方。"
+      },
+      {
+        "title": "手算",
+        "detail": "100和95代入得−0.95，定位多减1。"
+      },
+      {
+        "title": "看模式",
+        "detail": "只有backtest/hyperopt填custom_info，live另有守卫问题。"
+      }
+    ],
+    "chart": {
+      "kind": "sar",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "图展示SAR意图，现有回调不等同于图上点位止损。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 55,
+        "text": "返回值实际−SAR/current_rate。"
+      },
+      {
+        "line": 62,
+        "text": "仅回测和优化填充数据。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "Diamond",
+    "title": "移位与缩放交叉参数搜索",
+    "category": "参数搜索",
+    "summary": "任取OHLCV列的历史移位，与另一列缩放后交叉生成信号。当前载入买入甚至比较价格与成交量，强烈依赖单位，不能按常规均线金叉理解。",
+    "entry": [
+      {
+        "label": "载入买入",
+        "detail": "high.shift(7)上穿当前volume×0.942。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "载入卖出",
+        "detail": "high.shift(10)下穿当前low×1.184。"
+      }
+    ],
+    "risk": [
+      "5m，止损−27.1%；ROI分钟0/13/51/170为24.2%/4.4%/2%/0%。",
+      "跟踪开启，距离1.1%、偏移5.4%，only_offset=False。"
+    ],
+    "indicators": [
+      {
+        "key": "PRICE",
+        "usage": "无TA指标；OHLCV、shift与缩放。",
+        "formula": "Aₜ=字段A(t−s)，Bₜ=k×字段B(t)；上穿为Aₜ>Bₜ且Aₜ₋₁≤Bₜ₋₁，下穿反向。"
+      }
+    ],
+    "strengths": [
+      "移位和缩放便于学习时序参数。",
+      "可展示正shift访问历史。"
+    ],
+    "weaknesses": [
+      "价格与volume量纲不一致。",
+      "默认ma_fast/ma_slow不在候选中，且没有创建对应列。",
+      "搜索可能拟合偶然尺度关系。"
+    ],
+    "suitable": [
+      "参数搜索量纲检查。",
+      "shift与交叉事件教学。"
+    ],
+    "unsuitable": [
+      "未经修复与验证实盘。",
+      "跨计价币直接套用参数。"
+    ],
+    "pitfalls": [
+      "均线计算代码是注释，实际不生成均线。",
+      "无效default可能在载入参数覆盖前即被校验。"
+    ],
+    "walkthrough": [
+      {
+        "title": "对齐历史",
+        "detail": "7根前high对当前volume。"
+      },
+      {
+        "title": "改变单位",
+        "detail": "报价改成分，价格放大100倍但volume不变，信号改变。"
+      },
+      {
+        "title": "看卖出",
+        "detail": "10根前high对当前low×1.184，非买入的对称逆条件。"
+      }
+    ],
+    "chart": {
+      "kind": "price",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "K线定位历史high；跨量纲比较须另核算。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 64,
+        "text": "买入比较对象是成交量。"
+      },
+      {
+        "line": 103,
+        "text": "默认列名未实现。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "FixedRiskRewardLoss",
+    "title": "ATR初始风险与3.5R止损抬升",
+    "category": "执行示例",
+    "summary": "以开仓对应K线close−2ATR14作为初始止损，定义R=开仓价−初始止损。约1R时移至含费用成本，达到3.5R时移到目标价；这里调的是止损，不是立即发送止盈卖单。",
+    "entry": [
+      {
+        "label": "占位买入",
+        "detail": "enter_long全列1，完全没有择时条件。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "三阶段止损",
+        "detail": "初始S=close−2ATR；R=open_rate−S；current_profit≥R/current_rate时移至open_rate×(1+开仓费+平仓费)；利润≥3.5R/open_rate时移至open_rate+3.5R。"
+      },
+      {
+        "label": "普通信号关闭",
+        "detail": "exit_long全列0；ROI依赖配置或继承。"
+      }
+    ],
+    "risk": [
+      "兜底止损−90%，回调失败时风险很大。",
+      "本类未显式定义timeframe与minimal_roi，需查看配置/继承。",
+      "保本门槛分母为current_rate，因此不是固定开仓收益率的严格1R。"
+    ],
+    "indicators": [
+      {
+        "key": "ATR",
+        "usage": "TA-Lib默认14，stoploss_rate=close−2ATR。",
+        "formula": "TR=max(H−L,|H−前收|,|L−前收|)；ATRₜ=((N−1)×ATRₜ₋₁+TRₜ)/N，初始为N期TR均值，TA-Lib默认N=14。"
+      },
+      {
+        "key": "EXECUTION",
+        "usage": "R倍数与当前价格相对止损距离。",
+        "formula": "R=开仓价−S，目标价=开仓价+3.5R；返回stop_price/current_rate−1。"
+      }
+    ],
+    "strengths": [
+      "将初始风险与奖励倍数分开。",
+      "保本价显式包含开平仓费用。"
+    ],
+    "weaknesses": [
+      "所有K线买入只是占位。",
+      "Index.get_loc(method=ffill)为旧API，需核对pandas兼容性。",
+      "目标到达只是抬止损，不能保证目标价成交。"
+    ],
+    "suitable": [
+      "R倍数与自定义止损教学。",
+      "迁移风险管理组件到独立入场策略。"
+    ],
+    "unsuitable": [
+      "直接用全列买入实盘。",
+      "无法承受回调失效后宽止损。"
+    ],
+    "pitfalls": [
+      ".iloc取行后len(open_df)检查列数，目前单列才通过。",
+      "开仓时间与已完成K线的匹配必须核查。"
+    ],
+    "walkthrough": [
+      {
+        "title": "算R",
+        "detail": "开仓100、止损96，则R=4、3.5R目标114。"
+      },
+      {
+        "title": "看保本",
+        "detail": "R/current_rate随当前价变化，区别固定4%。"
+      },
+      {
+        "title": "看目标后",
+        "detail": "到114后抬止损至114，回撤触发与成交另受滑点影响。"
+      }
+    ],
+    "chart": {
+      "kind": "execution",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "比较初始止损、成本线与3.5R目标，不保证按目标成交。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 52,
+        "text": "旧索引API与时间匹配。"
+      },
+      {
+        "line": 77,
+        "text": "门槛分母为当前价格。"
+      },
+      {
+        "line": 108,
+        "text": "入场仅占位。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "GodStra",
+    "title": "全指标特征与DNA条件搜索",
+    "category": "参数搜索",
+    "summary": "12h使用独立的Python ta包批量产生特征，再由字典选择指标、操作符和阈值。当前实际买入仅为Ichimoku基准线<0.06295，卖出仅为KST差值接近0.8779；字典内其它候选字段不等于实际参与条件。",
+    "entry": [
+      {
+        "label": "当前字典",
+        "detail": "buy-indicator-0=trend_ichimoku_base、buy-oper-0=<R，因此仅判断基准线<0.06295。buy-cross-0=kcc与buy-int-0=42会读取，但当前操作符不用它们。"
+      },
+      {
+        "label": "组合方式",
+        "detail": "若扩展多个编号规则，所有规则AND；支持指标比较、上/下穿、整数/实数门槛与np.isclose。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "当前字典",
+        "detail": "trend_kst_diff与实数0.8779满足np.isclose，默认数值容差判近似相等；volume_mfi和98在当前=R分支不作门槛。"
+      }
+    ],
+    "risk": [
+      "12h；止损−34.549%；ROI分钟0/4818/6395/22372为35.56%/21.275%/9.024%/0%。",
+      "跟踪开启，偏移26.84%、距离22.673%，仅达偏移后开启；类导入会打印AgeFilter建议，并非实际配置保护。"
+    ],
+    "indicators": [
+      {
+        "key": "ICHIMOKU",
+        "usage": "Python ta的trend_ichimoku_base，默认基准26期；非TA-Lib。",
+        "formula": "基准线=(最近26根最高high+最近26根最低low)/2；当前规则把这个有价格量纲的值与0.06295比较。"
+      },
+      {
+        "key": "KST",
+        "usage": "Python ta的trend_kst_diff；默认ROC10/15/20/30、平滑10/10/10/15、信号9。",
+        "formula": "令ROCₙ=(C/C₋ₙ−1)；KST=100×[SMA10(ROC10)+2SMA10(ROC15)+3SMA10(ROC20)+4SMA15(ROC30)]；diff=KST−SMA9(KST)。"
+      },
+      {
+        "key": "KELTNER",
+        "usage": "volatility_kcc为Python ta原版Keltner中线，当前选定操作符并不用它。",
+        "formula": "KCC=SMA20((H+L+C)/3)。"
+      },
+      {
+        "key": "MFI",
+        "usage": "Python ta volume_mfi默认14期，当前=R卖出分支读取但不比较。",
+        "formula": "TP=(H+L+C)/3，原始资金流=TP×V；按TP较前一根上升或下降分组，MFI=100−100/(1+N期正向流量和/负向流量和)，默认N=14。"
+      },
+      {
+        "key": "TA_FEATURES",
+        "usage": "add_all_ta_features(fillna=True)还批量创建其它指标，当前规则未使用它们；更换字典时必须单独审查新指标。",
+        "formula": "这是特征生成器而非单一指标；其集合、默认参数和缺失填充依赖Python ta版本，不能用一条通用公式替代所有输出。"
+      }
+    ],
+    "strengths": [
+      "结构化规则字典可复用搜索流程。",
+      "清楚演示操作符决定哪些字段实际生效。"
+    ],
+    "weaknesses": [
+      "买入绝对价格阈值强依赖计价单位。",
+      "KST近似等于固定小数门槛可能很少触发。",
+      "全特征生成与fillna会引入额外成本，某些特征实现需审查前视/填充值风险。"
+    ],
+    "suitable": [
+      "研究自动特征/条件搜索框架。",
+      "学习字段存在与实际使用的差别。"
+    ],
+    "unsuitable": [
+      "把自动搜索结果当现成经济逻辑。",
+      "跨报价单位直接迁移。"
+    ],
+    "pitfalls": [
+      "import ta不是import talib；两库默认算法与缺失处理不能混用。",
+      "dropna会改变行集合；numpy.lib.math导入也需核对环境兼容。",
+      "np.isclose不是数学严格相等；当前默认容差大约atol1e−8+rtol1e−5×|阈值|。",
+      "已核对Python ta官方KST实现：初始shift缺项使用整段close.mean()填值，早期KST可能含全样本信息；本类又fillna=True且未声明预热，需固定库版本并排除预热区，做lookahead分析，不能直接认为所有自动特征因果安全。"
+    ],
+    "walkthrough": [
+      {
+        "title": "读操作符",
+        "detail": "<R只用指标和real，别误加kcc过滤。"
+      },
+      {
+        "title": "查看单位",
+        "detail": "Ichimoku基准线随币价尺度移动，0.06295不是百分比。"
+      },
+      {
+        "title": "检查退出",
+        "detail": "KST diff需落在极窄的0.8779容差附近，ROI/止损可能先发生。"
+      }
+    ],
+    "chart": {
+      "kind": "price",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "价格K线说明基准线尺度；KST差值须另算，不从图形猜买卖。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 47,
+        "text": "实际买入只比较实数门槛。"
+      },
+      {
+        "line": 56,
+        "text": "实际卖出使用np.isclose。"
+      },
+      {
+        "line": 91,
+        "text": "独立Python ta包批量生成。"
+      }
+    ],
+    "references": [
+      "https://technical-analysis-library-in-python.readthedocs.io/en/latest/ta.html",
+      "https://github.com/bukosabino/ta/blob/master/ta/trend.py",
+      "https://github.com/bukosabino/ta/blob/master/ta/wrapper.py"
+    ]
+  },
+  {
+    "id": "Heracles",
+    "title": "错位通道宽度比值筛选",
+    "category": "参数搜索",
+    "summary": "4h以历史Donchian通道相对位置除以另一期Keltner通道百分比宽度筛选。载入参数是DCP往前15根、KCW往前9根，比值位于[0.16,0.75]；它没有任何交叉条件，虽然参数名里含crossed。",
+    "entry": [
+      {
+        "label": "载入比值",
+        "detail": "d=DCP10.shift(15)/KCW20.shift(9)，0.16≤d≤0.75；两端包含。Parameter默认indicator_shift16，被buy_params15替换。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "信号关闭",
+        "detail": "exit_long全列0；依靠ROI和止损。"
+      }
+    ],
+    "risk": [
+      "4h；止损−25.6%；ROI分钟0/644/3269/7289为59.8%/16.6%/11.5%/0%。",
+      "shift15=60小时、shift9=36小时；实际等待数据预热需再加通道窗口。"
+    ],
+    "indicators": [
+      {
+        "key": "DONCHIAN",
+        "usage": "Python ta donchian_channel_pband，window10、offset0、fillna=False。",
+        "formula": "U=max10(H)，L=min10(Low)，DCP=(C−L)/(U−L)，通常0～1；零宽度需防除零/无效值。"
+      },
+      {
+        "key": "KELTNER",
+        "usage": "Python ta原版Keltner20，original_version=True；window_atr10在该原版分支不参与。",
+        "formula": "M=SMA20((H+L+C)/3)；U=SMA20((4H−2L+C)/3)，L=SMA20((−2H+4L+C)/3)；KCW=100×(U−L)/M。"
+      },
+      {
+        "key": "RATIO",
+        "usage": "错位后的DCP/KCW；均非TA-Lib。",
+        "formula": "dₜ=DCPₜ₋₁₅/KCWₜ₋₉；分母采用百分数尺度，若KCW=2、DCP=0.5，则d=0.25。"
+      }
+    ],
+    "strengths": [
+      "将通道位置和宽度组合成可检验条件。",
+      "正shift只访问过去，可教学时间错位。"
+    ],
+    "weaknesses": [
+      "两个指标来自不同历史时点，经济含义不直观。",
+      "宽度很小时比值不稳定。",
+      "没有当前反转确认和主动指标卖出。"
+    ],
+    "suitable": [
+      "通道特征工程研究。",
+      "分母百分数与比例尺度教学。"
+    ],
+    "unsuitable": [
+      "直接当实时布林反弹策略。",
+      "通道极窄或历史不足。"
+    ],
+    "pitfalls": [
+      "original_version=True用典型价原版通道，不是EMA±ATR版本。",
+      "crossed命名没有带来任何cross函数。"
+    ],
+    "walkthrough": [
+      {
+        "title": "找15根前",
+        "detail": "计算当时DCP10相对位置。"
+      },
+      {
+        "title": "找9根前",
+        "detail": "计算当时KCW20百分比宽度，再相除。"
+      },
+      {
+        "title": "判区间",
+        "detail": "例如0.5/2=0.25可通过；当前K线颜色并未参与。"
+      }
+    ],
+    "chart": {
+      "kind": "bbands",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "通道图仅帮助理解位置/宽度；源码不是BBANDS，且使用历史错位值。"
+    },
+    "status": "normal",
+    "sourceNotes": [
+      {
+        "line": 77,
+        "text": "采用原版Keltner，ATR窗口不参与。"
+      },
+      {
+        "line": 102,
+        "text": "实际是错位除法。"
+      },
+      {
+        "line": 120,
+        "text": "无主动指标退出。"
+      }
+    ],
+    "references": [
+      "https://github.com/bukosabino/ta/blob/master/ta/volatility.py",
+      "https://technical-analysis-library-in-python.readthedocs.io/en/latest/ta.html"
+    ]
+  },
+  {
+    "id": "hlhb",
+    "title": "双重同步交叉与ADX强度",
+    "category": "趋势",
+    "summary": "4h上要求RSI10上穿50、EMA5上穿EMA10同根发生，再用ADX>25过滤弱趋势。退出为对应双重下穿，源码变量hl2实际是开收均值，并非通常高低均值。",
+    "entry": [
+      {
+        "label": "全部AND",
+        "detail": "RSI10当根上穿50；EMA5当根上穿EMA10；ADX14>25；volume>0。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "全部AND",
+        "detail": "RSI10下穿50；EMA5下穿EMA10；ADX14>25；volume>0。"
+      }
+    ],
+    "risk": [
+      "止损−32.11%；ROI分钟0/703/2849/5520为62.25%/21.87%/3.63%/0%。",
+      "跟踪开启，偏移1.86%、距离1.17%，仅达偏移后跟踪；exit_profit_only=False；ignore_roi_if_entry_signal=True。",
+      "startup=30，position_stacking写成字符串\"True\"，不能据此假定实际启用同币叠仓。"
+    ],
+    "indicators": [
+      {
+        "key": "RSI",
+        "usage": "输入名hl2实际(O+C)/2，周期10。",
+        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。"
+      },
+      {
+        "key": "EMA",
+        "usage": "close的5/10期。",
+        "formula": "EMAₜ=α×Pₜ+(1−α)×EMAₜ₋₁，α=2/(N+1)；TA-Lib 以起始N期均值初始化，默认输入close。"
+      },
+      {
+        "key": "ADX",
+        "usage": "TA-Lib默认14，仅强度，无方向含义。",
+        "formula": "TR=max(H−L,|H−前收|,|L−前收|)；+DM/−DM取占优的正向高点增量/低点降幅；±DI=100×Wilder平滑(±DM)/Wilder平滑(TR)；DX=100×|+DI−−DI|/(+DI+−DI)，ADX为DX的Wilder平滑。"
+      }
+    ],
+    "strengths": [
+      "同根双交叉要求动量与趋势一致。",
+      "明确量能非零与趋势强度过滤。"
+    ],
+    "weaknesses": [
+      "同步交叉苛刻，前后错一根就错过。",
+      "退出也需ADX>25，趋势衰弱时可能无法发信号。",
+      "4h快线仍有滞后，基础止损较宽。"
+    ],
+    "suitable": [
+      "趋势持续、量能可靠的中短期研究。",
+      "学习事件交叉与状态条件差别。"
+    ],
+    "unsuitable": [
+      "窄区间反复震荡。",
+      "希望RSI先转弱就立即退出。"
+    ],
+    "pitfalls": [
+      "hl2不是(H+L)/2，本源码为(O+C)/2。",
+      "有入场信号时可能忽略ROI，需与信号退出和止损区分。"
+    ],
+    "walkthrough": [
+      {
+        "title": "两次前后关系",
+        "detail": "RSI前≤50今>50，EMA5前≤EMA10今>EMA10。"
+      },
+      {
+        "title": "加过滤",
+        "detail": "ADX>25且volume>0。"
+      },
+      {
+        "title": "反向退出",
+        "detail": "两项都下穿且ADX仍>25才有退出信号。"
+      }
+    ],
+    "chart": {
+      "kind": "ema",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "均线交叉必须同根匹配RSI50交叉，单看均线不足。"
+    },
+    "status": "normal",
+    "sourceNotes": [
+      {
+        "line": 89,
+        "text": "自定义hl2使用开盘与收盘。"
+      },
+      {
+        "line": 109,
+        "text": "双上穿同根AND。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "HourBasedStrategy",
+    "title": "按K线小时筛选的时间模板",
+    "category": "参数搜索",
+    "summary": "仅使用date.dt.hour。载入买入4～24实际涵盖4～23点；卖出22～21区间倒置，between不会自动理解跨夜。",
+    "entry": [
+      {
+        "label": "载入买入",
+        "detail": "hour.between(4,24)，包含端点，小时24实际不存在。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "倒置卖出",
+        "detail": "hour.between(22,21)恒不成立；仍依赖ROI/止损。"
+      }
+    ],
+    "risk": [
+      "1h，止损−10%；ROI分钟0/169/528/1837为52.8%/11.3%/8.9%/0%。",
+      "Parameter默认买卖均为1到0，也倒置；与保存参数区分。"
+    ],
+    "indicators": [
+      {
+        "key": "TIME",
+        "usage": "直接取date当前时区的小时；常见Freqtrade数据UTC，不能自动当北京时间。",
+        "formula": "between(a,b)等价a≤hour≤b，不会按24取模拆分跨日区间。"
+      }
+    ],
+    "strengths": [
+      "可研究市场时段效应。",
+      "无指标预热，可手工核对。"
+    ],
+    "weaknesses": [
+      "不感知价格方向。",
+      "当前卖出恒假。",
+      "时区和夏令时会改变实际含义。"
+    ],
+    "suitable": [
+      "UTC时段统计教学。",
+      "between边界行为教学。"
+    ],
+    "unsuitable": [
+      "直接按本地时钟理解。",
+      "依赖价格趋势择时。"
+    ],
+    "pitfalls": [
+      "小时24不是额外午夜K线。",
+      "跨夜区间需要OR，当前没有。"
+    ],
+    "walkthrough": [
+      {
+        "title": "读时区",
+        "detail": "确认date时区后取hour。"
+      },
+      {
+        "title": "看入场",
+        "detail": "03点失败，04和23点通过。"
+      },
+      {
+        "title": "验卖出",
+        "detail": "没有hour能同时≥22且≤21。"
+      }
+    ],
+    "chart": {
+      "kind": "price",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "K线只展示时段位置，不构成价格形态信号。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 86,
+        "text": "使用数据已有时区。"
+      },
+      {
+        "line": 62,
+        "text": "卖出min大于max。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "InformativeSample",
+    "title": "本币趋势与BTC参考周期",
+    "category": "多周期",
+    "summary": "本币5m EMA20/50与BTC/USDT 15m收盘相对SMA20同向才发信号。重点是informative pair合并与时间对齐，源码明确把它作为参考示例。",
+    "entry": [
+      {
+        "label": "两市场AND",
+        "detail": "本币EMA20>EMA50 AND BTC/USDT 15m close>SMA20；均为状态，不要求当根金叉。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "两市场同时弱",
+        "detail": "本币EMA20<EMA50 AND BTC/USDT 15m close<SMA20；exit_profit_only=True限制普通亏损退出。"
+      }
+    ],
+    "risk": [
+      "5m，止损−10%；ROI分钟0/20/30/60为5%/4%/3%/1%；跟踪关闭。",
+      "merge_informative_pair加ffill沿用最近已知高周期数据，不能提前使用尚未收盘15m。"
+    ],
+    "indicators": [
+      {
+        "key": "EMA",
+        "usage": "本币close的20/50/100期；EMA100已算未用于信号。",
+        "formula": "EMAₜ=α×Pₜ+(1−α)×EMAₜ₋₁，α=2/(N+1)；TA-Lib 以起始N期均值初始化，默认输入close。"
+      },
+      {
+        "key": "SMA",
+        "usage": "BTC/USDT 15m close滚动20期（5小时）。",
+        "formula": "SMAₙ=最近N个输入值之和/N；窗口包含当前已收盘K线。"
+      }
+    ],
+    "strengths": [
+      "展示跨交易对/周期合并。",
+      "BTC参照过滤部分孤立噪声。"
+    ],
+    "weaknesses": [
+      "BTC与本币相关性不稳定。",
+      "退出要求两者同步弱，可能延后。",
+      "无dp时不合并，但信号仍引用close_15m，会缺列。"
+    ],
+    "suitable": [
+      "学习参考交易对与时间对齐。",
+      "研究BTC主导时的趋势过滤。"
+    ],
+    "unsuitable": [
+      "无法获得BTC/USDT数据。",
+      "本币走势独立于BTC。"
+    ],
+    "pitfalls": [
+      "注释提stake_currency，实际硬编码BTC/USDT。",
+      "ffill是沿用已知值，不是预测。"
+    ],
+    "walkthrough": [
+      {
+        "title": "看本币",
+        "detail": "5m EMA20>EMA50。"
+      },
+      {
+        "title": "看参考",
+        "detail": "BTC已完成15m close>SMA20才能AND通过。"
+      },
+      {
+        "title": "看退出",
+        "detail": "本币均线弱且BTC弱同时成立，另外核查profit-only。"
+      }
+    ],
+    "chart": {
+      "kind": "ema",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "图只演示均线；完整条件需BTC独立数据与15m收盘对齐。"
+    },
+    "status": "example",
+    "sourceNotes": [
+      {
+        "line": 73,
+        "text": "硬编码参考对。"
+      },
+      {
+        "line": 98,
+        "text": "框架合并高周期数据。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "mabStra",
+    "title": "三均线比值与异常参数区间",
+    "category": "参数搜索",
+    "summary": "4h用SMA7/14与SMA14/28的比值同时位于区间来买入，卖出改用逆比值。当前默认买入区间很宽，而卖出下限2.81436高于上限1.54593；另有默认值超出声明搜索范围。",
+    "entry": [
+      {
+        "label": "默认AND区间",
+        "detail": "SMA7/SMA14与SMA14/SMA28都严格大于0.29497且小于2.25446。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "默认不可达",
+        "detail": "SMA14/SMA7与SMA28/SMA14都要求>2.81436且<1.54593，区间倒置。"
+      }
+    ],
+    "risk": [
+      "止损−12.8%；ROI分钟0/644/3269/7289为59.8%/16.6%/11.5%/0%。",
+      "周期参数2～100；比值搜索0～2；默认buy_max=2.25446和sell_min=2.81436超上界，需验证初始化/优化兼容。"
+    ],
+    "indicators": [
+      {
+        "key": "SMA",
+        "usage": "买卖各自7/14/28期参数，分列计算；不是EMA。",
+        "formula": "SMAₙ=最近N个输入值之和/N；窗口包含当前已收盘K线。"
+      },
+      {
+        "key": "MA_RATIO",
+        "usage": "两个相邻均线比值。",
+        "formula": "买A=SMA_mojo/SMA_fast，B=SMA_fast/SMA_slow；卖A′=1/A、B′=1/B；每个比值都要严格落在(min,max)。"
+      }
+    ],
+    "strengths": [
+      "比值对价格统一缩放较稳定。",
+      "相邻均线间相对距离容易手算。"
+    ],
+    "weaknesses": [
+      "卖出默认空集。",
+      "买入默认宽区间通常缺乏择时区分。",
+      "参数default超范围，精度也与decimals=4不一致。"
+    ],
+    "suitable": [
+      "参数有效性审计。",
+      "均线相对距离教学。"
+    ],
+    "unsuitable": [
+      "未经修复就按默认运行。",
+      "以为条件等于严格多头排列。"
+    ],
+    "pitfalls": [
+      "比值落在宽区间不代表SMA7>SMA14>SMA28。",
+      "源码没有保存buy/sell_params可代替这些default。"
+    ],
+    "walkthrough": [
+      {
+        "title": "画三均线",
+        "detail": "若三线接近，比值约1，通常买条件通过。"
+      },
+      {
+        "title": "与多头排列区分",
+        "detail": "即便短线略低于长线，比值仍在默认宽区间。"
+      },
+      {
+        "title": "审计卖点",
+        "detail": "数轴标出2.81436到1.54593，发现下限>上限。"
+      }
+    ],
+    "chart": {
+      "kind": "ema",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "示意均线相对距离；实际使用SMA与比值，不是EMA金叉。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 39,
+        "text": "买入上限超搜索范围。"
+      },
+      {
+        "line": 49,
+        "text": "卖出下限超范围且高于上限。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "multi_tf",
+    "title": "多周期多交易对RSI共振",
+    "category": "多周期",
+    "summary": "5m入场同时要求本币30m/1h及BTC、ETH/BTC的RSI偏低，用装饰器演示自动合并与自定义列名。它是在广泛超卖时买入，而不是用BTC上涨做趋势确认。",
+    "entry": [
+      {
+        "label": "本币AND",
+        "detail": "本币RSI14_5m<30、RSI14_30m<40、RSI14_1h<40，且5m RSI<1h RSI；volume>0。"
+      },
+      {
+        "label": "参照市场AND",
+        "detail": "BTC/{stake} 1h RSI14<35、RSI4<40、RSI2<30；ETH/BTC 1h RSI14<50。所有参照门槛再与本币条件AND。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "本币恢复",
+        "detail": "5m RSI14>70 AND rsi_less=False（有限正常值下即5m RSI≥1h RSI）AND volume>0。"
+      }
+    ],
+    "risk": [
+      "5m，止损−10%，固定ROI20%；跟踪关闭，已填跟踪参数不生效。",
+      "exit_profit_only=False，所以exit_profit_offset=0.01不能解释为所有退出至少赚1%；启动100根。",
+      "所有参考交易对/周期需能取得数据，装饰器合并沿用已完成参考K线。"
+    ],
+    "indicators": [
+      {
+        "key": "RSI",
+        "usage": "本币5m/30m/1h RSI14；BTC1h RSI14/4/2；ETH/BTC1h RSI14。",
+        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。"
+      }
+    ],
+    "strengths": [
+      "演示多重informative装饰器。",
+      "短中周期对照可描述超卖的相对程度。"
+    ],
+    "weaknesses": [
+      "严苛多重AND降低信号频率。",
+      "市场共同超卖也可能是系统性下跌。",
+      "依赖多个交易对，数据缺失/命名问题影响运行。"
+    ],
+    "suitable": [
+      "多周期合并与列名教学。",
+      "研究共同超卖后的反弹。"
+    ],
+    "unsuitable": [
+      "持续系统性熊市。",
+      "交易所无ETH/BTC或BTC计价参考。"
+    ],
+    "pitfalls": [
+      "BTC_rsi_fast_upper_1h的大小写来自自定义fmt，不能与小写btc列互换。",
+      "rsi_less=False在缺失值比较时未必等价≥，应先确保指标有效。"
+    ],
+    "walkthrough": [
+      {
+        "title": "比本币周期",
+        "detail": "5m低于30且低于1h，同时30m和1h低于40。"
+      },
+      {
+        "title": "看跨币确认",
+        "detail": "BTC三个周期参数与ETH/BTC全部过门槛。"
+      },
+      {
+        "title": "反弹退出",
+        "detail": "本币5m RSI>70并不再小于1h，量能非零才出信号。"
+      }
+    ],
+    "chart": {
+      "kind": "rsi",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "图只展示RSI机制，真实共振需多组独立时间序列。"
+    },
+    "status": "example",
+    "sourceNotes": [
+      {
+        "line": 54,
+        "text": "同函数堆叠30m与1h。"
+      },
+      {
+        "line": 104,
+        "text": "参照BTC要求低RSI。"
+      },
+      {
+        "line": 132,
+        "text": "退出要求相对RSI关系反转。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "MultiMa",
+    "title": "多条TEMA的排列组合",
+    "category": "趋势",
+    "summary": "4h用三重指数均线构造排列。载入买入count4/gap15实际要求TEMA15>TEMA30>TEMA45；卖出count12/gap68则任一相邻长TEMA高于短TEMA就触发。",
+    "entry": [
+      {
+        "label": "买入AND",
+        "detail": "循环0～3，past_key>1过滤掉前两项，只剩TEMA30<TEMA15与TEMA45<TEMA30。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "卖出OR",
+        "detail": "k=2…11，任一TEMA(k×68)>TEMA((k−1)×68)，即68～748期任一相邻关系转弱。"
+      }
+    ],
+    "risk": [
+      "4h，止损−34.5%，跟踪关闭；ROI分钟0/1553/2332/3169为52.3%/12.3%/7.6%/0%。",
+      "未显式预热数量；最长TEMA需大量历史。参数default买7/7卖7/94，与载入值不同。"
+    ],
+    "indicators": [
+      {
+        "key": "TEMA",
+        "usage": "预计算count0～19与gap0～99的周期乘积>1；最长1881期，信号只用部分。",
+        "formula": "E1=EMAₙ(C)，E2=EMAₙ(E1)，E3=EMAₙ(E2)；TEMA=3E1−3E2+E3。"
+      }
+    ],
+    "strengths": [
+      "AND入场、OR退出易比较。",
+      "TEMA试图减轻普通EMA滞后。"
+    ],
+    "weaknesses": [
+      "大量长周期预计算增加成本。",
+      "TEMA可超调，震荡时排列频繁变化。",
+      "买入15～45与退出68～748尺度差异大。"
+    ],
+    "suitable": [
+      "多均线排列教学。",
+      "比较TEMA与EMA响应。"
+    ],
+    "unsuitable": [
+      "短历史新币。",
+      "历史和计算资源受限的大规模搜索。"
+    ],
+    "pitfalls": [
+      "count1或2可能没有有效条件，不是更灵敏。",
+      "range不含上界20/100，搜索上界组合需核查可用列。"
+    ],
+    "walkthrough": [
+      {
+        "title": "展开索引",
+        "detail": "0、15、30、45中实际比较只剩两项。"
+      },
+      {
+        "title": "看买入",
+        "detail": "15在30之上且30在45之上。"
+      },
+      {
+        "title": "看卖出",
+        "detail": "十个相邻关系只需一个反转。"
+      }
+    ],
+    "chart": {
+      "kind": "ema",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "图用均线表示排列机制；实际TEMA不等同EMA图精确数值。"
+    },
+    "status": "normal",
+    "sourceNotes": [
+      {
+        "line": 82,
+        "text": "买入长均线低于短均线。"
+      },
+      {
+        "line": 98,
+        "text": "卖出任一条件成立。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "PatternRecognition",
+    "title": "日线蜡烛形态搜索与输出编码",
+    "category": "参数搜索",
+    "summary": "1d批量计算TA-Lib全部形态识别函数，载入值选择CDLHIGHWAVE==−100作多头入场。高浪线表示长上下影、小实体的犹豫结构；−100只是具体函数输出编码，不是保证下跌或上涨的概率。",
+    "entry": [
+      {
+        "label": "载入形态",
+        "detail": "CDLHIGHWAVE==−100；没有额外趋势、成交量或次日确认。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "空索引写法需核对",
+        "detail": "源码用dataframe.loc[(), \"exit_long\"]=1，没有布尔条件。本机pandas最小实验返回NaN列而未置1，不能把它解释为明确的形态卖点或必定每根卖出。"
+      },
+      {
+        "label": "其它退出",
+        "detail": "ROI、止损与跟踪仍是风险管理路径，实际需验证引擎对NaN信号处理。"
+      }
+    ],
+    "risk": [
+      "1d，止损−28.8%；ROI分钟0/5271/18147/48152为93.6%/33.2%/8.6%/0%。",
+      "跟踪开启，偏移8.4%、距离3.2%，仅达偏移后开启。",
+      "buy_vol1候选只有−100/100，但default=0不在候选；可能在初始化时失败，保存参数不保证能绕开。"
+    ],
+    "indicators": [
+      {
+        "key": "CANDLE_PATTERN",
+        "usage": "TA-Lib全部Pattern Recognition函数会计算，当前只用CDLHIGHWAVE。",
+        "formula": "实体=|C−O|，上影=H−max(O,C)，下影=min(O,C)−L；CDLHIGHWAVE检查小实体及两侧很长影线，阈值参考TA-Lib历史烛体平均设置，符合后按蜡烛颜色输出±100，否则0；其它形态各有独立规则，不共享这条公式。"
+      }
+    ],
+    "strengths": [
+      "展示TA-Lib批量函数发现和调用。",
+      "形态可用实体影线直接观察。"
+    ],
+    "weaknesses": [
+      "单形态不含趋势背景。",
+      "负编码形态被用于做多，需有独立反弹证据。",
+      "无效default与空tuple退出使运行行为不可靠。"
+    ],
+    "suitable": [
+      "蜡烛编码与形态识别教学。",
+      "修复后研究形态在不同趋势里的统计差异。"
+    ],
+    "unsuitable": [
+      "把±100视作置信概率。",
+      "未经初始化与信号列检查就实盘。"
+    ],
+    "pitfalls": [
+      "不同形态可能输出不同幅度，统一只搜索±100会遗漏其它编码。",
+      "导入的pandas_ta等并未参与当前规则，但仍可能影响环境可加载性。"
+    ],
+    "walkthrough": [
+      {
+        "title": "看蜡烛",
+        "detail": "找小实体、长上影和长下影。"
+      },
+      {
+        "title": "验函数",
+        "detail": "必须使用TA-Lib输出是否确为−100，不能只凭外形。"
+      },
+      {
+        "title": "查退出列",
+        "detail": "先验证空tuple赋值结果，再研究ROI和止损，不虚构形态退出。"
+      }
+    ],
+    "chart": {
+      "kind": "price",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "形态图只说明影线结构，不能把教学图判断替代TA-Lib实际输出。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 33,
+        "text": "载入形态是高浪线。"
+      },
+      {
+        "line": 60,
+        "text": "0不在候选列表。"
+      },
+      {
+        "line": 80,
+        "text": "退出没有实际布尔条件。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/",
+      "https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLHIGHWAVE.c"
+    ]
+  },
+  {
+    "id": "PowerTower",
+    "title": "原始价格幂比较",
+    "category": "参数搜索",
+    "summary": "无TA指标，把当前及前两根收盘价分别与两根之前收盘价的幂比较。指数约3.8导致价格高于1与低于1时门槛剧烈不同，并非归一化涨幅。",
+    "entry": [
+      {
+        "label": "三项AND",
+        "detail": "Cₜ>Cₜ₋₂^3.849；Cₜ₋₁>Cₜ₋₃^3.849；Cₜ₋₂>Cₜ₋₄^3.849。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "三项OR",
+        "detail": "对应三项变为小于，指数3.798；任一成立即可。"
+      }
+    ],
+    "risk": [
+      "5m，只做多，预热30；止损−28.8%，跟踪关闭。",
+      "ROI分钟0/39/56/159为21.3%/4.8%/2.9%/0%。"
+    ],
+    "indicators": [
+      {
+        "key": "POWER",
+        "usage": "Python幂运算，非TA-Lib；默认buy3.849、sell3.798，搜索0～4。",
+        "formula": "P^a=exp(a×lnP)，P>0；原始价格直接乘幂，没有除以基准价归一化。"
+      }
+    ],
+    "strengths": [
+      "短规则适合学习shift。",
+      "是报价尺度敏感性的清晰案例。"
+    ],
+    "weaknesses": [
+      "换报价单位即可改变信号。",
+      "价格>1时幂门槛可能过高，几乎无入场。",
+      "价格<1时幂门槛可能过低，几乎持续买入。"
+    ],
+    "suitable": [
+      "参数搜索伪规律研究。",
+      "固定单位合成序列数学实验。"
+    ],
+    "unsuitable": [
+      "跨市场直接迁移。",
+      "将其当归一化动量信号。"
+    ],
+    "pitfalls": [
+      "3.849次方不是3.849倍。",
+      "买卖指数不同，不是严格互补。"
+    ],
+    "walkthrough": [
+      {
+        "title": "低价例子",
+        "detail": "0.1^3.849约0.00014，当前0.1很容易超过。"
+      },
+      {
+        "title": "高价例子",
+        "detail": "10^3.849约7063，当前10很难超过。"
+      },
+      {
+        "title": "逐项核查",
+        "detail": "买入三组都真，卖出只需一组真。"
+      }
+    ],
+    "chart": {
+      "kind": "price",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "同形价格换单位就改变结果，是本方法核心局限。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 87,
+        "text": "原始价格直接幂运算。"
+      },
+      {
+        "line": 98,
+        "text": "卖出用OR。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "Strategy001",
+    "title": "EMA金叉与平均K线确认",
+    "category": "趋势",
+    "summary": "5分钟均线趋势策略：EMA20上穿EMA50时，再用平均K线确认收盘位置与方向。卖出使用EMA50上穿EMA100同时平均K线转弱，方向比较特殊，不能误读成死叉。",
+    "entry": [
+      {
+        "label": "三项同时成立",
+        "detail": "EMA20当根上穿EMA50；HA_Close>EMA20；HA_Open<HA_Close（平均K线阳线）。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "三项同时成立",
+        "detail": "EMA50当根上穿EMA100，同时HA_Close<EMA20且HA_Open>HA_Close。"
+      },
+      {
+        "label": "收益与风险退出",
+        "detail": "ROI和止损独立于指标信号；普通卖出信号还受exit_profit_only限制。"
+      }
+    ],
+    "risk": [
+      "5m；硬止损−10%；ROI按持仓分钟0/20/30/60要求5%/4%/3%/1%。",
+      "exit_profit_only=True限制普通退出信号；亏损仓位仍可能由止损退出。trailing_stop=False，1%跟踪距离与2%偏移均未启用。",
+      "信号产生不等于成交；限价进出可能未成交，手续费和滑点影响净收益；配置可能覆盖类属性。"
+    ],
+    "indicators": [
+      {
+        "key": "EMA",
+        "usage": "close输入，20/50/100期分别参与买入和卖出。",
+        "formula": "EMAₜ=α×Pₜ+(1−α)×EMAₜ₋₁，α=2/(N+1)；TA-Lib 以起始N期均值初始化，默认输入close。"
+      },
+      {
+        "key": "HEIKIN_ASHI",
+        "usage": "只取HA_Open和HA_Close作确认，不用其合成价格下单。",
+        "formula": "qtpylib平滑蜡烛，非TA-Lib：HA_Close=(O+H+L+C)/4；HA_Open=(前HA_Open+前HA_Close)/2，首根通常由(O+C)/2初始化。"
+      }
+    ],
+    "strengths": [
+      "交叉事件明确，容易逐根核对。",
+      "HA颜色和相对EMA位置给入场增加确认。"
+    ],
+    "weaknesses": [
+      "均线滞后，入场可能已错过上涨早段。",
+      "震荡时金叉反复且手续费累积。",
+      "退出要求慢均线金叉与短期转弱同根发生，可能很少出现。"
+    ],
+    "suitable": [
+      "研究5m趋势启动与回踩确认。",
+      "流动性较好、方向持续的行情教学。"
+    ],
+    "unsuitable": [
+      "窄幅震荡和频繁假突破。",
+      "期望指标在亏损时及时卖出的用法。"
+    ],
+    "pitfalls": [
+      "HA价格是合成值；exit_profit_only不是取消止损。",
+      "“上穿”需前根≤、本根>，高于均线的后续K线不算新交叉。"
+    ],
+    "walkthrough": [
+      {
+        "title": "观察前一根",
+        "detail": "先找到EMA20≤EMA50的位置，确保下一根有交叉可能。"
+      },
+      {
+        "title": "确认信号根",
+        "detail": "在EMA20上穿时，逐项检查HA收盘高于EMA20且HA为阳线。"
+      },
+      {
+        "title": "检查退出路径",
+        "detail": "观察EMA50与EMA100上穿时是否恰遇HA阴线，并另查ROI、止损。"
+      }
+    ],
+    "chart": {
+      "kind": "ema",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "比较快慢均线交叉与HA确认，不能把每次交叉都当成交。"
+    },
+    "status": "normal",
+    "sourceNotes": [
+      {
+        "line": 101,
+        "text": "买入是EMA20上穿EMA50。"
+      },
+      {
+        "line": 117,
+        "text": "卖出仍是上穿，不是下穿。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/",
+      "https://github.com/freqtrade/technical/blob/main/technical/vendor/qtpylib/indicators.py"
+    ]
+  },
+  {
+    "id": "Strategy001_custom_exit",
+    "title": "EMA与HA入场，增加RSI获利退出",
+    "category": "趋势",
+    "summary": "保留Strategy001的买卖信号和风险配置，另在custom_exit回调中读取最后已分析K线。RSI14>70且当前交易利润>0时返回rsi_profit_sell，给获利仓位增加一条退出路径。",
+    "entry": [
+      {
+        "label": "三项同时成立",
+        "detail": "EMA20当根上穿EMA50；HA_Close>EMA20；HA_Open<HA_Close（平均K线阳线）。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "三项同时成立",
+        "detail": "EMA50当根上穿EMA100，同时HA_Close<EMA20且HA_Open>HA_Close。"
+      },
+      {
+        "label": "收益与风险退出",
+        "detail": "ROI和止损独立于指标信号；普通卖出信号还受exit_profit_only限制。"
+      },
+      {
+        "label": "自定义回调退出",
+        "detail": "最后一根已分析K线RSI14>70 AND current_profit>0；返回rsi_profit_sell，不要求RSI刚上穿70。"
+      }
+    ],
+    "risk": [
+      "5m；硬止损−10%；ROI按持仓分钟0/20/30/60要求5%/4%/3%/1%。",
+      "exit_profit_only=True限制普通退出信号；亏损仓位仍可能由止损退出。trailing_stop=False，1%跟踪距离与2%偏移均未启用。",
+      "信号产生不等于成交；限价进出可能未成交，手续费和滑点影响净收益；配置可能覆盖类属性。"
+    ],
+    "indicators": [
+      {
+        "key": "EMA",
+        "usage": "close输入，20/50/100期分别参与买入和卖出。",
+        "formula": "EMAₜ=α×Pₜ+(1−α)×EMAₜ₋₁，α=2/(N+1)；TA-Lib 以起始N期均值初始化，默认输入close。"
+      },
+      {
+        "key": "HEIKIN_ASHI",
+        "usage": "只取HA_Open和HA_Close作确认，不用其合成价格下单。",
+        "formula": "qtpylib平滑蜡烛，非TA-Lib：HA_Close=(O+H+L+C)/4；HA_Open=(前HA_Open+前HA_Close)/2，首根通常由(O+C)/2初始化。"
+      },
+      {
+        "key": "RSI",
+        "usage": "TA-Lib RSI14，用于custom_exit回调。",
+        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。"
+      }
+    ],
+    "strengths": [
+      "交叉事件明确，容易逐根核对。",
+      "HA颜色和相对EMA位置给入场增加确认。"
+    ],
+    "weaknesses": [
+      "均线滞后，入场可能已错过上涨早段。",
+      "震荡时金叉反复且手续费累积。",
+      "退出要求慢均线金叉与短期转弱同根发生，可能很少出现。",
+      "RSI强趋势中可持续超买，提前获利退出会截短趋势。"
+    ],
+    "suitable": [
+      "研究5m趋势启动与回踩确认。",
+      "流动性较好、方向持续的行情教学。"
+    ],
+    "unsuitable": [
+      "窄幅震荡和频繁假突破。",
+      "期望指标在亏损时及时卖出的用法。"
+    ],
+    "pitfalls": [
+      "HA价格是合成值；exit_profit_only不是取消止损。",
+      "“上穿”需前根≤、本根>，高于均线的后续K线不算新交叉。",
+      "custom_exit不是populate_exit_trend；本回调显式检查利润，不能把普通退出信号的profit-only开关泛化成所有退出的保证。"
+    ],
+    "walkthrough": [
+      {
+        "title": "观察前一根",
+        "detail": "先找到EMA20≤EMA50的位置，确保下一根有交叉可能。"
+      },
+      {
+        "title": "确认信号根",
+        "detail": "在EMA20上穿时，逐项检查HA收盘高于EMA20且HA为阳线。"
+      },
+      {
+        "title": "检查退出路径",
+        "detail": "观察EMA50与EMA100上穿时是否恰遇HA阴线，并另查ROI、止损。"
+      }
+    ],
+    "chart": {
+      "kind": "ema",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "比较快慢均线交叉与HA确认，不能把每次交叉都当成交。"
+    },
+    "status": "normal",
+    "sourceNotes": [
+      {
+        "line": 104,
+        "text": "入场与原Strategy001一致。"
+      },
+      {
+        "line": 139,
+        "text": "RSI>70且current_profit>0才触发自定义退出。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/",
+      "https://github.com/freqtrade/technical/blob/main/technical/vendor/qtpylib/indicators.py"
+    ]
+  },
+  {
+    "id": "Strategy002",
+    "title": "锤子线与多重超卖反弹",
+    "category": "均值回归",
+    "summary": "同时寻找RSI、随机指标与布林下轨的超卖状态，并要求TA-Lib识别出锤子线。退出不是RSI70，而是SAR位于价格上方且RSI的反费雪变换大于0.3。",
+    "entry": [
+      {
+        "label": "四项AND",
+        "detail": "RSI14<30；STOCH默认SlowK<20；收盘价<典型价20期2倍标准差下轨；CDLHAMMER==100。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "转弱与恢复强度并存",
+        "detail": "SAR>close AND fisher_rsi>0.3（约等于RSI>53.10），并受普通信号盈利限制。"
+      }
+    ],
+    "risk": [
+      "5m；硬止损−10%；ROI按持仓分钟0/20/30/60要求5%/4%/3%/1%。",
+      "exit_profit_only=True限制普通退出信号；亏损仓位仍可能由止损退出。trailing_stop=False，1%跟踪距离与2%偏移均未启用。",
+      "信号产生不等于成交；限价进出可能未成交，手续费和滑点影响净收益；配置可能覆盖类属性。"
+    ],
+    "indicators": [
+      {
+        "key": "RSI",
+        "usage": "默认14期，买入低于30。",
+        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。"
+      },
+      {
+        "key": "STOCH",
+        "usage": "默认5/3/3；只使用SlowK。",
+        "formula": "RawK=100×(C−LL₅)/(HH₅−LL₅)；默认SlowK=SMA₃(RawK)，SlowD=SMA₃(SlowK)。"
+      },
+      {
+        "key": "BBANDS",
+        "usage": "qtpylib典型价20期、2σ；只使用下轨。",
+        "formula": "qtpylib：P=(H+L+C)/3，M=SMA20(P)，s=√[Σ(P−M)²/(n−1)]，上下轨=M±k×s；完整窗口n=20、标准差ddof=1。TA-Lib BBANDS常用close及总体标准差ddof=0，两者不可混作精确复现。"
+      },
+      {
+        "key": "SAR",
+        "usage": "默认加速0.02、上限0.2，用于退出。",
+        "formula": "趋势内递推SARₜ=SARₜ₋₁+AF×(EP−SARₜ₋₁)；EP为趋势极值，AF默认从0.02逐步增至0.2；结合前期高低点限幅，突破后翻转。"
+      },
+      {
+        "key": "FISHER_RSI",
+        "usage": "从RSI14转换，退出比较0.3。",
+        "formula": "源码自定义，非TA-Lib函数：x=0.1×(RSI−50)，F=(exp(2x)−1)/(exp(2x)+1)=tanh(x)；归一化值=50×(F+1)。"
+      },
+      {
+        "key": "CDLHAMMER",
+        "usage": "TA-Lib锤子形态，返回100才通过。",
+        "formula": "实体=|C−O|；下影=min(O,C)−L，上影=H−max(O,C)。TA-Lib同时检查小实体、长下影、很短上影和与前根低点相邻等相对历史平均阈值；不是固定下影/实体比，也不是收益概率。"
+      }
+    ],
+    "strengths": [
+      "多维确认可剔除部分单纯触碰下轨的噪声。",
+      "形态条件使教学能落到实体与影线。"
+    ],
+    "weaknesses": [
+      "严格四项同根成立，信号可能稀少。",
+      "超卖后仍可继续下跌，锤子线不保证底部。",
+      "多个超卖指标高度相关，不等于独立证据增加。"
+    ],
+    "suitable": [
+      "区间震荡中的急跌反弹研究。",
+      "学习影线结构与超卖状态联合判定。"
+    ],
+    "unsuitable": [
+      "连续阴跌、单边下行。",
+      "需要大量频繁信号的场景。"
+    ],
+    "pitfalls": [
+      "CDLHAMMER为规则检测值，不是100%胜率。",
+      "SlowK不同于STOCHF的FastK。"
+    ],
+    "walkthrough": [
+      {
+        "title": "定位超卖",
+        "detail": "找收盘跌破下轨并核对RSI<30、SlowK<20。"
+      },
+      {
+        "title": "看影线",
+        "detail": "检查下影与实体，再以TA-Lib实际CDLHAMMER输出验证，不能只凭肉眼。"
+      },
+      {
+        "title": "观察反弹结束",
+        "detail": "反弹后Fisher>0.3，若SAR翻到价格上方才形成信号退出。"
+      }
+    ],
+    "chart": {
+      "kind": "bbands",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "下轨之外不自动买入；同时还需锤子线与两项超卖。"
+    },
+    "status": "normal",
+    "sourceNotes": [
+      {
+        "line": 85,
+        "text": "这里使用慢随机指标。"
+      },
+      {
+        "line": 115,
+        "text": "四项买入条件用AND连接。"
+      },
+      {
+        "line": 132,
+        "text": "SAR与Fisher联合退出。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/",
+      "https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLHAMMER.c",
+      "https://github.com/freqtrade/technical/blob/main/technical/vendor/qtpylib/indicators.py"
+    ]
+  },
+  {
+    "id": "Strategy003",
+    "title": "资金流超卖与均线过滤",
+    "category": "均值回归",
+    "summary": "在价格低于SMA40、RSI与MFI偏低时寻找反弹候选。EMA50高于EMA100或EMA5刚上穿EMA10可任选一个通过，但随机指标要求FastD>FastK，不能解释为K线上穿D线。",
+    "entry": [
+      {
+        "label": "超卖主体AND",
+        "detail": "0<RSI14<28；close<SMA40；Fisher RSI<−0.94；MFI14<16；FastD>FastK且FastD>0。"
+      },
+      {
+        "label": "均线二选一",
+        "detail": "EMA50>EMA100 OR EMA5当根上穿EMA10；此OR整体再与超卖主体AND。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "与002相同",
+        "detail": "SAR>close AND Fisher RSI>0.3；普通信号还要满足盈利限制。"
+      }
+    ],
+    "risk": [
+      "5m；硬止损−10%；ROI按持仓分钟0/20/30/60要求5%/4%/3%/1%。",
+      "exit_profit_only=True限制普通退出信号；亏损仓位仍可能由止损退出。trailing_stop=False，1%跟踪距离与2%偏移均未启用。",
+      "信号产生不等于成交；限价进出可能未成交，手续费和滑点影响净收益；配置可能覆盖类属性。"
+    ],
+    "indicators": [
+      {
+        "key": "RSI",
+        "usage": "默认14期，用于0～28窄区间。",
+        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。"
+      },
+      {
+        "key": "MFI",
+        "usage": "默认14期，小于16。",
+        "formula": "TP=(H+L+C)/3，原始资金流=TP×V；按TP较前一根上升或下降分组，MFI=100−100/(1+N期正向流量和/负向流量和)，默认N=14。"
+      },
+      {
+        "key": "FISHER_RSI",
+        "usage": "买入<−0.94、卖出>0.3；前者比RSI<28更宽，常被RSI条件覆盖。",
+        "formula": "源码自定义，非TA-Lib函数：x=0.1×(RSI−50)，F=(exp(2x)−1)/(exp(2x)+1)=tanh(x)；归一化值=50×(F+1)。"
+      },
+      {
+        "key": "STOCHF",
+        "usage": "默认5/3，FastD>FastK，非看涨交叉。",
+        "formula": "FastK=100×(C−LLₙ)/(HHₙ−LLₙ)；FastD=SMAₘ(FastK)，TA-Lib默认N=5、M=3。"
+      },
+      {
+        "key": "EMA",
+        "usage": "close的5/10/50/100期。",
+        "formula": "EMAₜ=α×Pₜ+(1−α)×EMAₜ₋₁，α=2/(N+1)；TA-Lib 以起始N期均值初始化，默认输入close。"
+      },
+      {
+        "key": "SMA",
+        "usage": "close的40期基线。",
+        "formula": "SMAₙ=最近N个输入值之和/N；窗口包含当前已收盘K线。"
+      },
+      {
+        "key": "SAR",
+        "usage": "默认参数，用于退出。",
+        "formula": "趋势内递推SARₜ=SARₜ₋₁+AF×(EP−SARₜ₋₁)；EP为趋势极值，AF默认从0.02逐步增至0.2；结合前期高低点限幅，突破后翻转。"
+      },
+      {
+        "key": "BBANDS",
+        "usage": "典型价20期2σ下轨已计算，但未参与当前买卖条件。",
+        "formula": "qtpylib：P=(H+L+C)/3，M=SMA20(P)，s=√[Σ(P−M)²/(n−1)]，上下轨=M±k×s；完整窗口n=20、标准差ddof=1。TA-Lib BBANDS常用close及总体标准差ddof=0，两者不可混作精确复现。"
+      }
+    ],
+    "strengths": [
+      "将中期多头排列和短期金叉作为可替代的背景。",
+      "MFI加入成交量信息，区别于纯价格RSI。"
+    ],
+    "weaknesses": [
+      "RSI与Fisher信息重叠。",
+      "FastD>FastK可能表示短期动量仍弱。",
+      "严格多条件加盈利退出限制，可能出现久持亏损仓位。"
+    ],
+    "suitable": [
+      "上升趋势内深度回调教学。",
+      "比较OR子条件与整体AND结构。"
+    ],
+    "unsuitable": [
+      "长期趋势转熊。",
+      "不具备可靠成交量数据的市场。"
+    ],
+    "pitfalls": [
+      "布林下轨虽被计算，但本策略没有布林买入过滤。",
+      "EMA50>EMA100是状态，不要求当根金叉。"
+    ],
+    "walkthrough": [
+      {
+        "title": "确认低位",
+        "detail": "先看close<SMA40、RSI<28与MFI<16。"
+      },
+      {
+        "title": "检查分支",
+        "detail": "判断长均线多头状态或短均线金叉是否至少成立一个。"
+      },
+      {
+        "title": "核对随机指标",
+        "detail": "本根D要大于K；图示反弹也不能擅自把条件改成K>D。"
+      }
+    ],
+    "chart": {
+      "kind": "rsi",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "RSI超卖只是主体的一部分，必须追加MFI、均线分支和随机指标。"
+    },
+    "status": "normal",
+    "sourceNotes": [
+      {
+        "line": 131,
+        "text": "唯一均线OR分组。"
+      },
+      {
+        "line": 134,
+        "text": "要求D>K而非K金叉。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/",
+      "https://github.com/freqtrade/technical/blob/main/technical/vendor/qtpylib/indicators.py"
+    ]
+  },
+  {
+    "id": "Strategy004",
+    "title": "双尺度随机指标与ADX过滤",
+    "category": "均值回归",
+    "summary": "先要求前一根快慢随机指标都在低位，再找当前FastK严格上穿FastD。ADX给出趋势强度但不指方向，因此可能在强下跌时触发反弹买入。",
+    "entry": [
+      {
+        "label": "强度与偏离",
+        "detail": "ADX14>50 OR ADX35>26；同时CCI14<−100。"
+      },
+      {
+        "label": "前根与当根AND",
+        "detail": "前根FastK5和FastD5均<20；前根FastK50和FastD50均<30；前根K5<D5且当根K5>D5；12期平均volume>0.75；close>0.000001。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "四项AND",
+        "detail": "ADX35<25；当前K5>70 OR D5>70；前根K5<D5；close>EMA5。没有要求当前K5<D5，也不是明确死叉卖出。"
+      }
+    ],
+    "risk": [
+      "5m；硬止损−10%；ROI按持仓分钟0/20/30/60要求5%/4%/3%/1%。",
+      "exit_profit_only=True限制普通退出信号；亏损仓位仍可能由止损退出。trailing_stop=False，1%跟踪距离与2%偏移均未启用。",
+      "信号产生不等于成交；限价进出可能未成交，手续费和滑点影响净收益；配置可能覆盖类属性。"
+    ],
+    "indicators": [
+      {
+        "key": "ADX",
+        "usage": "14期与35期；买入为二者阈值OR，卖出只看35期。",
+        "formula": "TR=max(H−L,|H−前收|,|L−前收|)；+DM/−DM取占优的正向高点增量/低点降幅；±DI=100×Wilder平滑(±DM)/Wilder平滑(TR)；DX=100×|+DI−−DI|/(+DI+−DI)，ADX为DX的Wilder平滑。"
+      },
+      {
+        "key": "CCI",
+        "usage": "默认14期，买入<−100。",
+        "formula": "TP=(H+L+C)/3；CCI=(TP−SMAₙ(TP))/(0.015×N期TP相对均值的平均绝对偏差)，TA-Lib默认N=14。"
+      },
+      {
+        "key": "STOCHF",
+        "usage": "FastK窗口5和50，二者FastD均默认3；显式shift(1)。",
+        "formula": "FastK=100×(C−LLₙ)/(HHₙ−LLₙ)；FastD=SMAₘ(FastK)，TA-Lib默认N=5、M=3。"
+      },
+      {
+        "key": "EMA",
+        "usage": "close 5期，仅退出作价格基线。",
+        "formula": "EMAₜ=α×Pₜ+(1−α)×EMAₜ₋₁，α=2/(N+1)；TA-Lib 以起始N期均值初始化，默认输入close。"
+      },
+      {
+        "key": "SMA",
+        "usage": "volume 12期均值门槛0.75，注意单位是交易所成交量单位。",
+        "formula": "SMAₙ=最近N个输入值之和/N；窗口包含当前已收盘K线。"
+      }
+    ],
+    "strengths": [
+      "明确前根超卖、当根交叉的时序。",
+      "两种随机窗口检查不同尺度的低位。"
+    ],
+    "weaknesses": [
+      "ADX高既可能是涨势也可能是跌势。",
+      "绝对volume和价格阈值不适合跨币种无差别迁移。",
+      "退出条件并非对称死叉，容易被策略名与直觉误导。"
+    ],
+    "suitable": [
+      "研究强趋势中的短期反弹。",
+      "逐根演示shift与交叉事件。"
+    ],
+    "unsuitable": [
+      "横盘弱趋势且ADX持续低。",
+      "不同成交量单位与报价单位混用。"
+    ],
+    "pitfalls": [
+      "卖出只检查前根K<D，并未检查当前发生死叉。",
+      "前根必须严格小于D，等于D后上穿不符合此实现。"
+    ],
+    "walkthrough": [
+      {
+        "title": "前一根快照",
+        "detail": "把5期K/D<20与50期K/D<30逐项标记。"
+      },
+      {
+        "title": "交叉确认",
+        "detail": "当前5期K>D且前根K<D，才满足时序门槛。"
+      },
+      {
+        "title": "卖出复核",
+        "detail": "转到ADX35<25区间，核对高位K/D、前根关系与EMA5。"
+      }
+    ],
+    "chart": {
+      "kind": "adx",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "ADX线只表示强度，方向必须回到K线和其它条件判断。"
+    },
+    "status": "normal",
+    "sourceNotes": [
+      {
+        "line": 123,
+        "text": "两个ADX门槛使用OR。"
+      },
+      {
+        "line": 135,
+        "text": "手写交叉使用严格前根小于。"
+      },
+      {
+        "line": 152,
+        "text": "退出不要求当前死叉。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "Strategy005",
+    "title": "放量低位筛选与可选退出",
+    "category": "参数搜索",
+    "summary": "5m反弹策略把4倍均量、SMA下方、随机指标与Fisher RSI组合起来。buy_params与sell_params提供载入值；源码还存在类别默认值不合法和SAR退出分支量纲错误，应先修复验证再研究表现。",
+    "entry": [
+      {
+        "label": "载入参数下全部AND",
+        "detail": "close>0.000002；volume>150期含当前均量×4；close<SMA40；FastD>FastK；RSI>26；FastD>1；归一化Fisher<5。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "当前选择的分支",
+        "detail": "sell_trigger=rsi-macd-minusdi：RSI当根上穿74 AND MACD<0 AND −DI14>4。"
+      },
+      {
+        "label": "备用分支异常",
+        "detail": "sar-fisherRsi要求SAR>close且未归一化Fisher>sell_fishRsiNorma（载入30、默认50）；Fisher范围[−1,1]，该门槛不可达。"
+      }
+    ],
+    "risk": [
+      "5m；止损−10%；ROI分钟0/20/40/80/1440对应5%/4%/3%/2%/1%。",
+      "trailing_stop=False；普通信号exit_profit_only=True。",
+      "默认值与已保存参数不同：buy_volumeAVG默认70载入150；buy_rsi默认30载入26；fastd默认30载入1；Fisher默认30载入5。"
+    ],
+    "indicators": [
+      {
+        "key": "RSI",
+        "usage": "默认14期；买入为大于26，不是小于26。",
+        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。"
+      },
+      {
+        "key": "FISHER_RSI",
+        "usage": "买入使用0～100归一化值，备用卖出却使用−1～1原值。",
+        "formula": "源码自定义，非TA-Lib函数：x=0.1×(RSI−50)，F=(exp(2x)−1)/(exp(2x)+1)=tanh(x)；归一化值=50×(F+1)。"
+      },
+      {
+        "key": "STOCHF",
+        "usage": "默认5/3；FastK与FastD。",
+        "formula": "FastK=100×(C−LLₙ)/(HHₙ−LLₙ)；FastD=SMAₘ(FastK)，TA-Lib默认N=5、M=3。"
+      },
+      {
+        "key": "SMA",
+        "usage": "close40期与volume载入150期均值。",
+        "formula": "SMAₙ=最近N个输入值之和/N；窗口包含当前已收盘K线。"
+      },
+      {
+        "key": "MACD",
+        "usage": "默认12/26/9，只用MACD<0，signal计算后未参与条件。",
+        "formula": "MACD=EMA₁₂(C)−EMA₂₆(C)，Signal=EMA₉(MACD)，Hist=MACD−Signal；本库柱线不额外乘2。"
+      },
+      {
+        "key": "ADX",
+        "usage": "只调用MINUS_DI默认14期用于退出，未计算ADX本身。",
+        "formula": "TR=max(H−L,|H−前收|,|L−前收|)；+DM/−DM取占优的正向高点增量/低点降幅；±DI=100×Wilder平滑(±DM)/Wilder平滑(TR)；DX=100×|+DI−−DI|/(+DI+−DI)，ADX为DX的Wilder平滑。"
+      },
+      {
+        "key": "SAR",
+        "usage": "默认参数；仅异常的备用卖出分支使用。",
+        "formula": "趋势内递推SARₜ=SARₜ₋₁+AF×(EP−SARₜ₋₁)；EP为趋势极值，AF默认从0.02逐步增至0.2；结合前期高低点限幅，突破后翻转。"
+      }
+    ],
+    "strengths": [
+      "4倍均量使信号关注短期成交活跃区。",
+      "可演示超参数载入与分支选择。"
+    ],
+    "weaknesses": [
+      "sell_trigger的default=30不在字符串候选中，可能阻止参数初始化。",
+      "备用SAR卖出分支量纲错误，无法正常触发。",
+      "RSI上穿74且MACD<0同时发生较苛刻，退出容易依赖ROI/止损。"
+    ],
+    "suitable": [
+      "先修复后做参数空间教学。",
+      "研究低位异常放量与动量恢复。"
+    ],
+    "unsuitable": [
+      "直接以现有源码无验证实盘。",
+      "低流动性或刷量明显的币种。"
+    ],
+    "pitfalls": [
+      "不能将buy_params当成Parameter定义default；运行值还可能被外部参数文件覆盖。",
+      "当前均量含当根，4倍门槛与用前150根均量不同。"
+    ],
+    "walkthrough": [
+      {
+        "title": "放量与价格",
+        "detail": "先看volume相对150期均值是否超过4倍且价在SMA40下。"
+      },
+      {
+        "title": "解开双RSI门槛",
+        "detail": "RSI>26且归一化Fisher<5约限制RSI<35.28，形成窄区间。"
+      },
+      {
+        "title": "比较退出分支",
+        "detail": "主分支追踪RSI上穿74；备用分支用数轴展示30超出Fisher范围。"
+      }
+    ],
+    "chart": {
+      "kind": "rsi",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "核对RSI和归一化Fisher的数值区间，图表不能证明异常分支可交易。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 72,
+        "text": "类别默认值30不在候选列表。"
+      },
+      {
+        "line": 180,
+        "text": "备用分支使用了错误量纲。"
+      },
+      {
+        "line": 158,
+        "text": "买入RSI是下限。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "Supertrend",
+    "title": "三组超级趋势方向共识",
+    "category": "趋势",
+    "summary": "1h分别计算三组买入与三组卖出Supertrend方向，三买方向全up才买、三卖方向全down才卖。实际调用technical.indicators.supertrend，当前官方实现以TR的简单滚动均值作ATR，不能默认等同Wilder ATR版。",
+    "entry": [
+      {
+        "label": "载入买入AND",
+        "detail": "(multiplier,period)=(4,8)、(7,9)、(1,8)三组方向均up AND volume>0；是方向状态，不是必须当根翻多。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "载入卖出AND",
+        "detail": "(1,16)、(3,18)、(6,18)三组方向均down AND volume>0。"
+      }
+    ],
+    "risk": [
+      "止损−26.5%；ROI分钟0/372/861/2221为8.7%/5.8%/2.9%/0%。",
+      "跟踪开启，偏移14.4%、距离5%，only_offset=False；预热199根。",
+      "Parameter默认所有m=4、p=14；载入buy/sell_params使用不同组合；运行technical版本应固定核验。"
+    ],
+    "indicators": [
+      {
+        "key": "SUPER_TREND",
+        "usage": "technical库函数，非TA-Lib自带Supertrend；只取方向stx并将缺失填空字符串。",
+        "formula": "当前官方实现：TR=max(H−L,|H−前收|,|L−前收|)，A=SMAₙ(TR)；基础U/L=(H+L)/2±mA。最终上轨在基础上轨更低或前收突破前上轨时更新，否则延续；下轨对称。按前一Supertrend所在轨与本根收盘是否突破切换轨道；C<ST为down，否则up。"
+      }
+    ],
+    "strengths": [
+      "多个宽度/周期方向一致，可过滤单条快速翻转。",
+      "用ATR类尺度自适应波动。"
+    ],
+    "weaknesses": [
+      "三组均同源OHLC，并非三份独立证据。",
+      "震荡时来回翻转造成交易成本。",
+      "宽轨道共识形成较慢，退出可能回吐较多。"
+    ],
+    "suitable": [
+      "方向持续的趋势研究。",
+      "比较ATR带宽对翻转滞后的影响。"
+    ],
+    "unsuitable": [
+      "窄幅横盘频繁假突破。",
+      "要求不同平台Supertrend数值天然一致。"
+    ],
+    "pitfalls": [
+      "本仓库不再用原注释里的本地循环，而是technical包委托实现。",
+      "SMA(TR)与Wilder ATR初始化和平滑不同，平台同名指标不一定一致。"
+    ],
+    "walkthrough": [
+      {
+        "title": "看单条轨道",
+        "detail": "价格突破最终上轨后切到下轨，方向转up。"
+      },
+      {
+        "title": "等三组共识",
+        "detail": "快线up不够，宽带组也up才产生买入候选。"
+      },
+      {
+        "title": "独立看卖组",
+        "detail": "卖组参数与买组不同，必须三组down。"
+      }
+    ],
+    "chart": {
+      "kind": "supertrend",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "图为轨道机制；精确复现需相同technical版本和TR平滑方法。"
+    },
+    "status": "normal",
+    "sourceNotes": [
+      {
+        "line": 32,
+        "text": "第二买入组倍数7。"
+      },
+      {
+        "line": 153,
+        "text": "真实指标委托technical包。"
+      }
+    ],
+    "references": [
+      "https://github.com/freqtrade/technical/blob/main/technical/indicators/supertrend.py"
+    ]
+  },
+  {
+    "id": "SwingHighToSky",
+    "title": "长窗口CCI低位与极高RSI退出",
+    "category": "均值回归",
+    "summary": "15m入场以CCI72<−175为主，RSI36<90提供很宽的上限。退出要求CCI66>−106且RSI45>88，后者是很强的超买状态，可能令实际退出更多依赖ROI。",
+    "entry": [
+      {
+        "label": "载入买入AND",
+        "detail": "CCI72<−175 AND RSI36<90。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "载入卖出AND",
+        "detail": "CCI66>−106 AND RSI45>88。"
+      }
+    ],
+    "risk": [
+      "止损−34.338%；ROI分钟0/33/64/244为27.058%/8.53%/4.093%/0%。",
+      "Parameter定义默认买CCI100/20期、RSI30/26期，与buy_params保存值明显不同；顶部常量也不是信号直接引用对象。"
+    ],
+    "indicators": [
+      {
+        "key": "CCI",
+        "usage": "买入72期、卖出66期；不是默认14。",
+        "formula": "TP=(H+L+C)/3；CCI=(TP−SMAₙ(TP))/(0.015×N期TP相对均值的平均绝对偏差)，TA-Lib默认N=14。"
+      },
+      {
+        "key": "RSI",
+        "usage": "买入36期、卖出45期；载入阈值90/88。",
+        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。"
+      }
+    ],
+    "strengths": [
+      "分别给进出场使用独立窗口。",
+      "CCI直接描述相对典型价均值的极端偏离。"
+    ],
+    "weaknesses": [
+      "RSI<90买过滤很宽。",
+      "RSI45>88卖门槛苛刻，可能少有信号。",
+      "15m深度超卖遇持续下跌时风险高，止损较宽。"
+    ],
+    "suitable": [
+      "研究超卖CCI的反弹。",
+      "比较参数default与载入值。"
+    ],
+    "unsuitable": [
+      "单边下行市场。",
+      "希望指标卖点频繁主动控制亏损。"
+    ],
+    "pitfalls": [
+      "顶部cciBuyTP等常量未被计算函数直接引用，实际用Parameter.value。",
+      "买卖不是CCI穿越阈值事件，而是持续大于/小于状态。"
+    ],
+    "walkthrough": [
+      {
+        "title": "先看CCI",
+        "detail": "72期CCI落到−175以下。"
+      },
+      {
+        "title": "看RSI上限",
+        "detail": "36期RSI只需<90，不等于RSI超卖。"
+      },
+      {
+        "title": "看卖出稀缺性",
+        "detail": "CCI66回到−106上还不够，RSI45必须>88。"
+      }
+    ],
+    "chart": {
+      "kind": "rsi",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "图展示RSI极端高值对退出的限制，完整入场仍要CCI72。"
+    },
+    "status": "normal",
+    "sourceNotes": [
+      {
+        "line": 58,
+        "text": "载入买入CCI72。"
+      },
+      {
+        "line": 67,
+        "text": "卖出RSI门槛88。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "TrendRiderStrategy",
+    "title": "六路入场、跨周期评分与阶梯退出",
+    "category": "多周期",
+    "summary": "1h只做多，把回踩、EMA支撑、RSI反弹、均线金叉、下轨反弹与MACD翻正作为六个可替代入口。任何入口通过后仍须confirm_trade_entry置信分数达标；源码的ATR止损实际关闭，恐惧贪婪/资金费率等也只是固定占位值。",
+    "entry": [
+      {
+        "label": "所有入口共同门槛",
+        "detail": "volume>0，BTC/USDT:USDT 1h RSI14>35，25≤fng_value≤85；fng_value固定50所以后两项恒通过。六路之间为OR，各路内部AND，后写入入口可能覆盖enter_tag。以下按buy_params载入EMA9/16、RSI16、pullback30～65、bounce35、ADX18、volume_factor0.7说明。"
+      },
+      {
+        "label": "①趋势回踩",
+        "detail": "is_bull=close>EMA200且EMA50>EMA200；low≤EMA16×1.02、close>EMA16、close>open；30<RSI16<65（且<70）；ADX14>18；V/EMA20(V)>0.7；+DI>−DI；OBV>EMA20(OBV)；close>日线EMA200。只有这路显式加日线过滤。"
+      },
+      {
+        "label": "②EMA50支撑",
+        "detail": "is_bull；low≤EMA50×1.01、close>EMA50且阳线；30<RSI16<50；ADX>20；量比>1；MACD柱比前根高。"
+      },
+      {
+        "label": "③RSI反弹",
+        "detail": "close>EMA200；前根RSI16<35、今根>35（严格，不含等于）；close>布林下轨且阳线；量比>0.8；OBV>其EMA20。"
+      },
+      {
+        "label": "④EMA金叉",
+        "detail": "EMA9当前>EMA16且前根≤；40<RSI16<75；close>EMA200；量比>0.5。"
+      },
+      {
+        "label": "⑤布林下轨反弹",
+        "detail": "close≤下轨×1.005、阳线、RSI16<45、量比>0.7、ADX>18；本入口没有EMA200多头要求，也允许收盘仍在下轨下方。"
+      },
+      {
+        "label": "⑥MACD翻正",
+        "detail": "柱线今>0且前≤0；close>EMA50且>EMA200；40<RSI16<60；ADX>15；量比>0.8。"
+      },
+      {
+        "label": "最后的评分闸门",
+        "detail": "confirm_trade_entry评分映射到1～10：RSI35～60加1.5；ADX>30加2.5否则>阈值加1.5；量比>1.5加2.5否则>1加1.5；MACD柱正加1.5且上升再0.5；OBV>均线加1.5；BTC RSI40～70加1.5；4h多头且ADX>20加1.5；布林位置<0.35加1；+DI−−DI>10加1；FNG40～60加1；|funding|<0.0001加1。numeric=round(score×10/17.5)并裁1～10；市场状态含Bear需≥6，否则≥5。固定FNG与funding贡献2分，并非实时市场证据。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "四路指标OR",
+        "detail": "①RSI16>78；②EMA9下穿EMA16且MACD柱<0、RSI>50；③今close<EMA200×0.99且前close≥前EMA200（要求一根跨过至少1%）；④close<EMA200×0.995且RSI>72、MACD柱比前根下降。每路均需volume>0，后写exit_tag可覆盖。"
+      },
+      {
+        "label": "按持仓时间级联",
+        "detail": "custom_exit按顺序：≥2h且利润<−1.5%；≥4h且利润<0；≥8h且利润<0.5%；≥16h且利润<1%；≥24h无条件时间退出。相同交易若满足多个，先命中的原因返回。"
+      },
+      {
+        "label": "ROI与跟踪",
+        "detail": "ROI分钟0/124/290/764为22.9%/13.6%/4.4%/0%；达到5%偏移后3%跟踪距离；基础止损−6%。"
+      }
+    ],
+    "risk": [
+      "1h、预热210、只做多、禁止仓位调整；leverage回调固定返回1。",
+      "固定−6%止损，ATR止损关闭；5%之后3%跟踪仅达偏移启用；不是标题注释所称ATR-aware止损。",
+      "保护配置：Cooldown20分钟；StoplossGuard回看720分钟内3次触发后停60分钟、全币种；MaxDrawdown回看1440分钟、至少5笔、最大10%回撤后停300分钟。是否在回测启用保护需查运行设置。",
+      "buy_params的ADX18低于IntParameter范围20～35，volume_factor0.7低于范围1～2.5；保存值与搜索空间不一致，需核验参数载入和优化。",
+      "参考BTC写死为期货符号BTC/USDT:USDT；虽can_short=False与1x，现货环境未必有该数据。"
+    ],
+    "indicators": [
+      {
+        "key": "EMA",
+        "usage": "close5～30、50、200；载入9/16；volume20、OBV20；4h50/200、日线200、BTC1h50/200。",
+        "formula": "EMAₜ=α×Pₜ+(1−α)×EMAₜ₋₁，α=2/(N+1)；TA-Lib 以起始N期均值初始化，默认输入close。"
+      },
+      {
+        "key": "RSI",
+        "usage": "本币10～20全算，载入16；4h与BTC1h14。",
+        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。"
+      },
+      {
+        "key": "ADX",
+        "usage": "本币及4h的ADX14，本币PLUS_DI14和MINUS_DI14。",
+        "formula": "TR=max(H−L,|H−前收|,|L−前收|)；+DM/−DM取占优的正向高点增量/低点降幅；±DI=100×Wilder平滑(±DM)/Wilder平滑(TR)；DX=100×|+DI−−DI|/(+DI+−DI)，ADX为DX的Wilder平滑。"
+      },
+      {
+        "key": "MACD",
+        "usage": "TA-Lib12/26/9，保存柱线前一根用于变化与评分。",
+        "formula": "MACD=EMA₁₂(C)−EMA₂₆(C)，Signal=EMA₉(MACD)，Hist=MACD−Signal；本库柱线不额外乘2。"
+      },
+      {
+        "key": "BBANDS",
+        "usage": "TA-Lib close20期±2σ；带宽与带宽SMA50用于市场标签。",
+        "formula": "M=SMA20(close)，U/L=M±2σ20(close)；width=(U−L)/(M+1e−10)，width_sma=SMA50(width)；位置=(close−L)/(U−L)，评分阈值0.35。"
+      },
+      {
+        "key": "OBV",
+        "usage": "TA-Lib OBV与EMA20，入场及评分使用。",
+        "formula": "若Cₜ>Cₜ₋₁则OBV加V；若下跌则减V；相等不变；再对累积OBV求EMA20。"
+      },
+      {
+        "key": "ATR",
+        "usage": "TA-Lib14已计算，但use_custom_stoploss=False且本类无custom_stoploss函数；不参与当前风险控制。",
+        "formula": "TR=max(H−L,|H−前收|,|L−前收|)；ATRₜ=((N−1)×ATRₜ₋₁+TRₜ)/N，初始为N期TR均值，TA-Lib默认N=14。"
+      },
+      {
+        "key": "VOLUME_RATIO",
+        "usage": "当根volume相对EMA20(volume)，分母加1e−10。",
+        "formula": "volume_ratio=V/(EMA20(V)+1e−10)，当根V也参与EMA，不是前20根均量比。"
+      },
+      {
+        "key": "REGIME",
+        "usage": "自定义行情分类供确认入场的门槛选择。",
+        "formula": "ADX<20→Ranging；否则is_bull且close>EMA200→Trending Bull；否则Trending Bear；width>1.5×width_sma仅加High Vol标签，不改变基础Bear判断。"
+      }
+    ],
+    "strengths": [
+      "六类入口各有标签，便于分组归因而非只看总绩效。",
+      "除了ROI/止损，持仓时间退出明确约束资金占用。",
+      "确认入场时再评分，能教学信号与实际允许下单之间的区别。"
+    ],
+    "weaknesses": [
+      "六路入口并非统一牛市过滤，布林入口可在EMA200下方触发。",
+      "评分权重与阈值来自人为规则，1～10不是概率或校准置信度。",
+      "FNG和funding固定值使评分无条件加分，不能当实时链上分析。",
+      "4h/日线历史不足与缺失回退改变过滤力度；210小时不等于200天日线预热。",
+      "2小时亏损退出可能在趋势正常回调阶段止损，长周期信号与短持仓容忍需结合验证。"
+    ],
+    "suitable": [
+      "逐入口研究趋势回调与反弹。",
+      "学习多周期上下文、评分门槛和callback顺序。",
+      "对照时间止损如何改变资金占用。"
+    ],
+    "unsuitable": [
+      "把所有入口当已确认牛市信号。",
+      "依赖真实FNG/资金费率或ATR止损的场景。",
+      "参考数据不完整却期待同样决策。"
+    ],
+    "pitfalls": [
+      "缺失BTC数据会填RSI50、btc_is_bull1；缺失日线EMA填0，回踩的日线过滤等于放开；有列但NaN不会被“确保列存在”代码修补。",
+      "4h趋势主要用于加分，并不是六路共有硬过滤；BTC_is_bull也不是共有入场条件，实际共有条件只看BTC RSI。",
+      "趋势破坏出口要求上一根仍≥EMA200；若先缓跌到均线下0.5%再跌到下1%，该出口可能错过。",
+      "注释中的“saving avg −3%”等效果没有本次验证，不应作为教学结论。"
+    ],
+    "walkthrough": [
+      {
+        "title": "先选一个入口",
+        "detail": "以EMA9/16金叉为例，只需该路条件成立，不必等其它五路都成立。"
+      },
+      {
+        "title": "加入真实上下文",
+        "detail": "查看本币EMA200、BTC RSI与已完成4h；缺失数据时观察回退如何放宽门槛。"
+      },
+      {
+        "title": "手算评分",
+        "detail": "把每项加分列出来，注意FNG50和funding0自动贡献2分；Ranging用≥5，Bear用≥6。"
+      },
+      {
+        "title": "分辨退出来源",
+        "detail": "画开仓后2/4/8/16/24小时检查点，分别与ROI阶梯、6%止损和5%后跟踪比较。"
+      },
+      {
+        "title": "检验异常边界",
+        "detail": "观察缓慢跌破EMA200时，上一根条件可能让trend_broken不触发；再看其它出口是否补位。"
+      }
+    ],
+    "chart": {
+      "kind": "ema",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "图以EMA金叉入口作机制示意，不可替代其它五路、参考市场、评分和回调的完整执行。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 35,
+        "text": "ATR止损明确未启用。"
+      },
+      {
+        "line": 80,
+        "text": "载入值低于声明搜索下界。"
+      },
+      {
+        "line": 264,
+        "text": "FNG为固定中性占位值。"
+      },
+      {
+        "line": 363,
+        "text": "布林入口不含EMA200过滤。"
+      },
+      {
+        "line": 628,
+        "text": "信号还需confirm回调评分通过。"
+      },
+      {
+        "line": 603,
+        "text": "时间退出按顺序级联。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "TWAPStrategy",
+    "title": "按时间等额拆单的双向执行示例",
+    "category": "执行示例",
+    "summary": "15m RSI只提供示例方向信号，核心是把目标资金拆成10份，已成交后至少间隔1分钟再执行下一份。多空均支持，一旦开始退出就继续分批退出，不因RSI回摆重新加仓。",
+    "entry": [
+      {
+        "label": "示例方向",
+        "detail": "RSI14<45且volume>0进入多头；RSI14>55且volume>0进入空头。"
+      },
+      {
+        "label": "首单与后续",
+        "detail": "custom_stake_amount返回proposed_stake/10；后续目标总额=首个已成交entry的stake×10，剩余金额/剩余片数。以最后实际成交时间+1分钟为下一次到期点，不以信号时间固定排满日程。"
+      },
+      {
+        "label": "回调保护",
+        "detail": "有未完成订单返回None；退出流程优先；入场已成交数量未满10才继续加仓。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "反向RSI触发",
+        "detail": "多头最新RSI>55、空头RSI<45，开始分批退出；populate_exit_trend不写退出列。"
+      },
+      {
+        "label": "退出优先与持续",
+        "detail": "已有任一exit成交则持续退出，即便RSI后来反向；每次返回−当前stake/剩余片数，最后一片返回−全部stake。首片退出可立即执行，之后至少距最后成交1分钟。"
+      },
+      {
+        "label": "独立退出",
+        "detail": "固定ROI2%与止损−10%仍可能在10片完成前关闭交易。"
+      }
+    ],
+    "risk": [
+      "can_short=True，需支持做空的运行市场；现货不能直接以本类双向模式运行。",
+      "position_adjustment_enable=True；分片需预留剩余资金，首单小额可能低于交易所最小金额。",
+      "1分钟是回调执行下限，15m回测粒度或实际轮询不一定能还原逐分钟成交；应检查detail timeframe与真实订单限制。"
+    ],
+    "indicators": [
+      {
+        "key": "RSI",
+        "usage": "TA-Lib默认14期，15m；45/55是状态阈值，不是交叉。",
+        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。"
+      },
+      {
+        "key": "EXECUTION",
+        "usage": "自定义等额资金分片，非TA-Lib价格指标。",
+        "formula": "N=10；首片Q₁=Q/10；目标Q*=10×首片实际stake；后续q=(Q*−已成交stake合计)/(N−已成交片数)。平仓回调返回负stake，由引擎转换为数量。"
+      }
+    ],
+    "strengths": [
+      "分散单笔交易时间点暴露。",
+      "用实际成交计数与时间推进，避免有挂单时重复下单。"
+    ],
+    "weaknesses": [
+      "示例RSI信号未证明预测优势。",
+      "快速上涨时分批买可能越来越贵，拆单不保证减少成本。",
+      "首片实际成交额反推总目标，最小金额或裁剪可能改变原计划；后续未显式处理min/max stake。"
+    ],
+    "suitable": [
+      "学习adjust_trade_position执行接口。",
+      "大目标金额分片与订单状态管理研究。"
+    ],
+    "unsuitable": [
+      "需要一刻内完整建仓。",
+      "最小下单额高于每片资金或流动性极差。"
+    ],
+    "pitfalls": [
+      "TWAP在此是等时间资金分片机制，不是计算一条平均价格指标。",
+      "持续加仓不重新检查最初买入条件；但反向RSI退出优先。",
+      "原始买卖信号、部分成交、框架整仓ROI/止损是不同事件。"
+    ],
+    "walkthrough": [
+      {
+        "title": "确定首片",
+        "detail": "假设建议1000且未受限，第一片100。"
+      },
+      {
+        "title": "等实际成交",
+        "detail": "成交后至少1分钟、有挂单则等；目标1000扣已成交再分剩余片。"
+      },
+      {
+        "title": "触发平仓",
+        "detail": "多头RSI>55先卖剩余stake的1/10，首片后即进入持续退出状态。"
+      },
+      {
+        "title": "比较回测时钟",
+        "detail": "15m K线并不含每分钟路径，不能画10个标记就声称真实可成交。"
+      }
+    ],
+    "chart": {
+      "kind": "execution",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "显示分片时点与实际价格变化，教学标记不是引擎成交记录。"
+    },
+    "status": "example",
+    "sourceNotes": [
+      {
+        "line": 83,
+        "text": "首单按建议资金1/10。"
+      },
+      {
+        "line": 105,
+        "text": "退出优先且开始后持续。"
+      },
+      {
+        "line": 125,
+        "text": "目标从首片实际成交额推算。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  },
+  {
+    "id": "UniversalMACD",
+    "title": "EMA比值区间与倒置卖出门槛",
+    "category": "均值回归",
+    "summary": "将EMA12/EMA26−1作为无量纲指标，避免普通MACD绝对价格差不易跨币比较的问题。当前默认买入是负值窄区间，卖出min大于max导致between区间为空，必须按源码识别。",
+    "entry": [
+      {
+        "label": "默认区间",
+        "detail": "−0.01416≤UMACD≤−0.01176，即EMA12比EMA26低约1.176%～1.416%，持续状态不是金叉。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "默认空区间",
+        "detail": "between(−0.00707,−0.02323)上下限倒置，普通退出条件恒假。"
+      },
+      {
+        "label": "风险/收益退出",
+        "detail": "仍有ROI和止损；不能把没有指标卖点理解为永久不卖。"
+      }
+    ],
+    "risk": [
+      "5m，只做多，预热30；止损−31.8%，跟踪关闭。",
+      "ROI分钟0/27/60/164为21.3%/9.9%/3%/0%。"
+    ],
+    "indicators": [
+      {
+        "key": "EMA",
+        "usage": "TA-Lib close 12/26期。",
+        "formula": "EMAₜ=α×Pₜ+(1−α)×EMAₜ₋₁，α=2/(N+1)；TA-Lib 以起始N期均值初始化，默认输入close。"
+      },
+      {
+        "key": "UMACD",
+        "usage": "自定义相对均线差，无signal线。",
+        "formula": "UMACD=EMA12/EMA26−1=(EMA12−EMA26)/EMA26；它相当于百分比价格振荡器未乘100，不是MACD柱线。"
+      }
+    ],
+    "strengths": [
+      "比值弱化名义价格尺度影响。",
+      "明确区间便于逐根手算。"
+    ],
+    "weaknesses": [
+      "默认卖出区间不成立。",
+      "负值区间可能在下跌延续时反复触发。",
+      "没有量能、趋势或反转确认。"
+    ],
+    "suitable": [
+      "相对均线差与绝对MACD比较教学。",
+      "修复参数后研究均值回归。"
+    ],
+    "unsuitable": [
+      "未检查卖出参数即实盘。",
+      "持续下跌缺乏反弹的市场。"
+    ],
+    "pitfalls": [
+      "名称MACD不意味着存在9期signal或柱线。",
+      "between包含两端，且不会自动排序min/max。"
+    ],
+    "walkthrough": [
+      {
+        "title": "计算比值",
+        "detail": "EMA12=98.7、EMA26=100，UMACD=−0.013，落入买区。"
+      },
+      {
+        "title": "观察状态",
+        "detail": "指标连续处在区间会持续产生候选信号。"
+      },
+      {
+        "title": "检查卖区",
+        "detail": "数轴上−0.00707在−0.02323右侧，要求同时≥前者且≤后者不可达。"
+      }
+    ],
+    "chart": {
+      "kind": "macd",
+      "note": "教学合成K线仅演示相关指标机制，不代表此策略完整条件、成交或回测收益。",
+      "focus": "MACD示意解释均线差；实际交易使用除以慢EMA的UMACD，不可直接套普通柱线阈值。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 88,
+        "text": "实际是EMA比值−1。"
+      },
+      {
+        "line": 83,
+        "text": "卖出默认min大于max。"
+      }
+    ],
+    "references": [
+      "https://ta-lib.org/functions/"
+    ]
+  }
+]

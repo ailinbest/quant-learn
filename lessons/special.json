@@ -1,0 +1,1869 @@
+[
+  {
+    "id": "futures/FAdxSmaStrategy",
+    "title": "强趋势中的双均线交叉",
+    "category": "合约",
+    "summary": "1小时策略，用ADX筛选趋势强度，SMA12与SMA48交叉决定多空方向。强度回落就同时发出两侧离场信号；源码的退出阈值实际复用了入场参数。",
+    "entry": [
+      {
+        "label": "做多",
+        "detail": "ADX14>30，且SMA12当根上穿SMA48；两个条件须同根成立。"
+      },
+      {
+        "label": "做空",
+        "detail": "ADX14>30，且SMA12当根下穿SMA48。can_short=True；无volume>0过滤。"
+      },
+      {
+        "label": "可调参数",
+        "detail": "ADX周期4–24（默认14）、短SMA4–24（默认12）、长SMA12–175（默认48）；pos_entry_adx/pos_exit_adx均15–40、默认30、精度1位。没有buy_params/sell_params覆盖。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "平多与平空",
+        "detail": "同为ADX14<pos_entry_adx（默认30）；不是反向均线交叉退出。ADX刚好30时此规则不触发。"
+      },
+      {
+        "label": "ROI",
+        "detail": "持仓0–29分钟目标5%；30–59分钟目标10%；60分钟起7.5%。30分钟的目标反而升高，按源码原样解释。"
+      }
+    ],
+    "risk": [
+      "固定stoploss=-0.05（交易收益−5%），trailing_stop=False。",
+      "源码未定义leverage回调，Freqtrade默认1倍；文件位于futures目录不代表自动加杠杆。若另行修改杠杆L，ROI/止损按含杠杆交易收益计算，价格容忍距离大致是收益阈值/L，且手续费、资金费率和清算边界仍需计入。",
+      "startup_candle_count=14，小于默认SMA48所需数据长度，也不足以让ADX14充分稳定；开头NaN和递推稳定性必须检查。"
+    ],
+    "indicators": [
+      {
+        "key": "SMA",
+        "usage": "close上的12/48期均线，交叉决定方向。",
+        "formula": "TA-Lib：SMA_n(t)=最近n根close之和/n，各根权重相等；新价格进入、最旧价格退出。"
+      },
+      {
+        "key": "ADX",
+        "usage": "14期，入场>30，离场<30。",
+        "formula": "TA-Lib：TR=max(H−L,|H−前收|,|L−前收|)；比较本根向上与向下移动，较大且为正的一侧记作±DM；Wilder平滑后±DI=100×平滑DM/平滑TR；DX=100×|+DI−−DI|/(+DI+−DI)，ADX再对DX作Wilder平滑。数值衡量强弱，不表示上涨方向。"
+      }
+    ],
+    "strengths": [
+      "把方向与强度分开，容易逐根验证。",
+      "多空对称，能用于学习趋势策略而不局限上涨。"
+    ],
+    "weaknesses": [
+      "均线滞后，趋势后段才交叉时可能追高追低。",
+      "ADX过滤要求恰好与交叉同根；交叉后ADX才过线会错过整段。",
+      "震荡交叉增加换手；弱趋势退出也可能提前结束盈利趋势。"
+    ],
+    "suitable": [
+      "研究有持续趋势且流动性充分的合约。",
+      "对比有无ADX过滤对均线系统的影响。"
+    ],
+    "unsuitable": [
+      "窄幅震荡与高交易成本场景。",
+      "未经补足热身就比较首批交易。"
+    ],
+    "pitfalls": [
+      "pos_exit_adx声明在sell空间却从未被exit使用，优化它不会改变退出逻辑。",
+      "周期优化没有强制短周期<长周期，搜索可能产生等长或反转组合。",
+      "futures/Readme.md只是Binance isolated dry_run配置示例与作者测试说明，不是当前收益验证。"
+    ],
+    "walkthrough": [
+      {
+        "title": "先找交叉",
+        "detail": "确认上一根短SMA≤长SMA、本根短SMA>长SMA，这是一次上穿而非持续在上方。"
+      },
+      {
+        "title": "检查ADX",
+        "detail": "把ADX为29与31的两次交叉对比：只有31通过强度门槛。"
+      },
+      {
+        "title": "分辨退出",
+        "detail": "均线仍多头排列时ADX跌到29也会平多；随后继续上涨并不代表规则出错。"
+      }
+    ],
+    "chart": {
+      "kind": "ema",
+      "note": "仅演示相关指标机制，非完整策略成交或回测结果。",
+      "focus": "观察均线交叉的延迟；图中均线仅用于解释机制，实际周期以源码SMA12/48为准。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 52,
+        "text": "pos_entry_adx和pos_exit_adx分别声明，但后者未被使用。"
+      },
+      {
+        "line": 88,
+        "text": "长短SMA交叉决定多空。"
+      },
+      {
+        "line": 117,
+        "text": "两侧退出都引用pos_entry_adx。"
+      }
+    ],
+    "references": [
+      {
+        "label": "TA-Lib 指标函数与公式",
+        "url": "https://ta-lib.org/functions/"
+      },
+      {
+        "label": "Freqtrade 多空与杠杆",
+        "url": "https://www.freqtrade.io/en/stable/leverage/"
+      },
+      {
+        "label": "Freqtrade 杠杆回调与收益口径",
+        "url": "https://www.freqtrade.io/en/stable/strategy-callbacks/#leverage-callback"
+      },
+      {
+        "label": "Freqtrade 止损与追踪",
+        "url": "https://www.freqtrade.io/en/stable/stoploss/"
+      }
+    ]
+  },
+  {
+    "id": "futures/FReinforcedStrategy",
+    "title": "大周期定方向，小周期EMA触发",
+    "category": "合约",
+    "summary": "5分钟EMA8/21交叉配合1小时SMA50方向过滤：只顺大周期均线所在方向开仓。ADX只负责退出，布林带仅供绘图，名称和参数声明容易让人误以为入场也有ADX过滤。",
+    "entry": [
+      {
+        "label": "做多",
+        "detail": "close>已完成1小时K线的SMA50，同时5分钟EMA8上穿EMA21。"
+      },
+      {
+        "label": "做空",
+        "detail": "close<1小时SMA50，同时EMA8下穿EMA21；can_short=True。"
+      },
+      {
+        "label": "默认与范围",
+        "detail": "EMA短4–24默认8、长12–175默认21、ADX4–24默认14；pos_entry_adx和pos_exit_adx都是15–40默认30。没有buy_params/sell_params；三个周期参数没有显式space且名称不带buy_/sell_前缀，Hyperopt兼容性需核对。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "两侧离场",
+        "detail": "ADX14<pos_entry_adx（默认30）。这里依然没有使用pos_exit_adx。"
+      },
+      {
+        "label": "ROI",
+        "detail": "0分钟5%，30分钟10%，60分钟7.5%；单位为持仓分钟，非K线根数。"
+      }
+    ],
+    "risk": [
+      "stoploss=-5%，不启用移动止损。",
+      "源码未定义leverage回调，Freqtrade默认1倍；文件位于futures目录不代表自动加杠杆。若另行修改杠杆L，ROI/止损按含杠杆交易收益计算，价格容忍距离大致是收益阈值/L，且手续费、资金费率和清算边界仍需计入。",
+      "仅设置14根启动K线，而1小时SMA50大致需要50小时、约600根5分钟数据加上对齐余量；短热身会使过滤器长期无值。"
+    ],
+    "indicators": [
+      {
+        "key": "EMA",
+        "usage": "5分钟close的8/21期，交叉触发。",
+        "formula": "EMA_t=α×close_t+(1−α)×EMA_(t−1)，α=2/(n+1)。TA-Lib通常以首n根SMA初始化，Pandas ewm(adjust=False)则从首值递推，热身初期不能视为逐点相同。"
+      },
+      {
+        "key": "SMA",
+        "usage": "technical重采样到60分钟后取close的SMA50；安全合并到5分钟。",
+        "formula": "TA-Lib：SMA_n(t)=最近n根close之和/n，各根权重相等；新价格进入、最旧价格退出。 technical.resampled_merge按大周期收盘可得时点对齐并前向填充，不能把未结束小时的收盘提前用于前面的小K线。"
+      },
+      {
+        "key": "ADX",
+        "usage": "5分钟14期，仅用于退出。",
+        "formula": "TA-Lib：TR=max(H−L,|H−前收|,|L−前收|)；比较本根向上与向下移动，较大且为正的一侧记作±DM；Wilder平滑后±DI=100×平滑DM/平滑TR；DX=100×|+DI−−DI|/(+DI+−DI)，ADX再对DX作Wilder平滑。数值衡量强弱，不表示上涨方向。"
+      },
+      {
+        "key": "BBANDS",
+        "usage": "QTPyLib close的20期、2倍标准差；仅绘图。",
+        "formula": "QTPyLib：中轨=输入序列的20期简单均值，上下轨=中轨±2×滚动样本标准差。输入是close还是(H+L+C)/3会改变数值，不能混用TA-Lib BBANDS的默认周期或标准差口径。"
+      }
+    ],
+    "strengths": [
+      "大周期过滤为短周期交易提供明确方向约束。",
+      "跨周期与单周期职责清楚，适合学习指标合并时点。"
+    ],
+    "weaknesses": [
+      "启动历史明显不足，直接默认运行难以得到可靠早期信号。",
+      "EMA交叉可能同时处于ADX<30退出状态，多空同侧进出信号冲突可使开仓被忽略。",
+      "大周期均线滞后，行情刚反转时仍可能阻止正确方向入场。"
+    ],
+    "suitable": [
+      "有较长单边趋势的多周期研究。",
+      "学习如何合并已完成的大周期K线。"
+    ],
+    "unsuitable": [
+      "短促V形反转和频繁假突破。",
+      "只加载几十根5分钟K线的环境。"
+    ],
+    "pitfalls": [
+      "pos_entry_adx名称像入场阈值，实际只在退出用；pos_exit_adx完全未用。",
+      "布林上下轨计算不参与任何买卖条件。",
+      "安全重采样不是插值；小时SMA数值会阶梯式更新。"
+    ],
+    "walkthrough": [
+      {
+        "title": "看大周期门槛",
+        "detail": "在小K线上叠加小时SMA50，先判close在哪一侧。"
+      },
+      {
+        "title": "看小周期触发",
+        "detail": "只有方向一致的EMA8/21交叉才产生候选入场。"
+      },
+      {
+        "title": "检查退出冲突",
+        "detail": "若同根ADX<30，不能把图上的上穿箭头直接当成实际成交。"
+      }
+    ],
+    "chart": {
+      "kind": "ema",
+      "note": "仅演示相关指标机制，非完整策略成交或回测结果。",
+      "focus": "比较顺着长周期方向的交叉与逆方向交叉。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 49,
+        "text": "14根启动历史远少于小时SMA50所需。"
+      },
+      {
+        "line": 82,
+        "text": "5分钟乘12，重采样60分钟后计算SMA50并安全合并。"
+      },
+      {
+        "line": 131,
+        "text": "退出仅看ADX且误用入场命名的阈值。"
+      }
+    ],
+    "references": [
+      {
+        "label": "TA-Lib 指标函数与公式",
+        "url": "https://ta-lib.org/functions/"
+      },
+      {
+        "label": "Freqtrade 多空与杠杆",
+        "url": "https://www.freqtrade.io/en/stable/leverage/"
+      },
+      {
+        "label": "Freqtrade 杠杆回调与收益口径",
+        "url": "https://www.freqtrade.io/en/stable/strategy-callbacks/#leverage-callback"
+      },
+      {
+        "label": "Freqtrade 止损与追踪",
+        "url": "https://www.freqtrade.io/en/stable/stoploss/"
+      },
+      {
+        "label": "technical 重采样与安全合并源码",
+        "url": "https://github.com/freqtrade/technical/blob/main/technical/util.py"
+      }
+    ]
+  },
+  {
+    "id": "futures/FSampleStrategy",
+    "title": "RSI越界与TEMA拐头的双向样例",
+    "category": "合约",
+    "summary": "1小时样例，用RSI穿越阈值、TEMA9相对布林中轨的位置及斜率决定多空。虽然计算了很多指标，实际买卖只用RSI、TEMA、布林中轨与成交量。",
+    "entry": [
+      {
+        "label": "开多",
+        "detail": "RSI14上穿30；TEMA9≤典型价布林中轨；TEMA本根>前根；volume>0，四项同时满足。"
+      },
+      {
+        "label": "开空",
+        "detail": "RSI14上穿70（确实是上穿，不是从超买区下穿）；TEMA9>中轨；TEMA本根<前根；volume>0。can_short=True。"
+      },
+      {
+        "label": "参数",
+        "detail": "阈值30/70、TEMA9、布林20/2均为写死值，没有Hyperopt参数。startup=30。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "平多",
+        "detail": "与开空条件完全相同：RSI上穿70+TEMA高于中轨且下行+正成交量。"
+      },
+      {
+        "label": "平空",
+        "detail": "与开多条件完全相同：RSI上穿30+TEMA不高于中轨且上行+正成交量。"
+      },
+      {
+        "label": "ROI",
+        "detail": "minimal_roi={0:1}表示目标100%收益，不是1%；通常更多依赖信号或止损。"
+      }
+    ],
+    "risk": [
+      "固定stoploss=-5%；trailing_stop=False。",
+      "源码未定义leverage回调，Freqtrade默认1倍；文件位于futures目录不代表自动加杠杆。若另行修改杠杆L，ROI/止损按含杠杆交易收益计算，价格容忍距离大致是收益阈值/L，且手续费、资金费率和清算边界仍需计入。",
+      "startup=30能让核心RSI与TEMA初步产生值，但不代表所有额外指标都已有效，例如MACD和HT_SINE需要更多历史。"
+    ],
+    "indicators": [
+      {
+        "key": "RSI",
+        "usage": "close默认14期，实际触发30/70上穿。",
+        "formula": "TA-Lib：ΔC拆为gain=max(ΔC,0)、loss=max(−ΔC,0)，分别做14期Wilder平滑；RSI=100−100/(1+平均gain/平均loss)。边界按库实现处理。"
+      },
+      {
+        "key": "TEMA",
+        "usage": "close9期，位置与斜率过滤。",
+        "formula": "TA-Lib：E1=EMA9(close)，E2=EMA9(E1)，E3=EMA9(E2)，TEMA=3E1−3E2+E3；低滞后也可能超调。"
+      },
+      {
+        "key": "BBANDS",
+        "usage": "QTPyLib典型价(H+L+C)/3，20期2σ；只用中轨。",
+        "formula": "QTPyLib：中轨=输入序列的20期简单均值，上下轨=中轨±2×滚动样本标准差。输入是close还是(H+L+C)/3会改变数值，不能混用TA-Lib BBANDS的默认周期或标准差口径。 bb_percent=(C−下轨)/(上轨−下轨)，bb_width=(上轨−下轨)/中轨；这两个衍生值未用于交易。"
+      },
+      {
+        "key": "ADX",
+        "usage": "TA-Lib默认14；已计算但未用于信号。",
+        "formula": "TA-Lib：TR=max(H−L,|H−前收|,|L−前收|)；比较本根向上与向下移动，较大且为正的一侧记作±DM；Wilder平滑后±DI=100×平滑DM/平滑TR；DX=100×|+DI−−DI|/(+DI+−DI)，ADX再对DX作Wilder平滑。数值衡量强弱，不表示上涨方向。"
+      },
+      {
+        "key": "STOCHF",
+        "usage": "TA-Lib默认fastk5、fastd3、SMA；未用于信号。",
+        "formula": "FastK=100×(C−最低L5)/(最高H5−最低L5)，FastD=SMA3(FastK)。"
+      },
+      {
+        "key": "MACD",
+        "usage": "TA-Lib默认12/26/9；三列均未用于信号。",
+        "formula": "DIF=EMA12(C)−EMA26(C)，signal=EMA9(DIF)，hist=DIF−signal；TA-Lib柱值不额外乘2。"
+      },
+      {
+        "key": "MFI",
+        "usage": "TA-Lib默认14；未用于信号。",
+        "formula": "TP=(H+L+C)/3，原始资金流=TP×V；按TP涨跌分正负流，MFI=100−100/(1+14期正流和/负流和)。"
+      },
+      {
+        "key": "SAR",
+        "usage": "TA-Lib默认acceleration0.02、maximum0.2；未用于信号。",
+        "formula": "SAR_t=SAR_(t−1)+AF×(EP−SAR_(t−1))，EP为趋势极值；新极值递增AF并封顶，遇反转重置且按高低价约束。"
+      },
+      {
+        "key": "HT_SINE",
+        "usage": "TA-Lib默认Hilbert Sine/LeadSine；仅计算。",
+        "formula": "先从价格滤波估计主周期相位φ，再输出sin(φ)与sin(φ+45°)；递推滤波有较长热身。"
+      }
+    ],
+    "strengths": [
+      "规则可拆成动量触发、位置过滤、方向过滤三层。",
+      "多空与对应退出形成镜像，便于学习v3信号字段。"
+    ],
+    "weaknesses": [
+      "开空要求RSI上穿70但TEMA正在下降，联合条件可能较少出现，不能擅自改成下穿解释。",
+      "ROI100%门槛很高，不能据此假设经常大幅止盈。",
+      "大量无用指标增加计算与阅读负担。"
+    ],
+    "suitable": [
+      "学习Freqtrade多空信号接口。",
+      "研究震荡后的反弹及高位动量分歧，需先验证条件频率。"
+    ],
+    "unsuitable": [
+      "把示例默认参数直接当成经过验证的盈利模型。",
+      "手续费和滑点占波段收益很大时。"
+    ],
+    "pitfalls": [
+      "不能看到文件里有MACD/SAR就把它们写入买卖理由。",
+      "同根反向信号可用于平仓，但实际是否立即反手受引擎订单流程与可用仓位限制。"
+    ],
+    "walkthrough": [
+      {
+        "title": "观察RSI",
+        "detail": "定位RSI从≤30变成>30的一根，连续高于30不是新上穿。"
+      },
+      {
+        "title": "检查TEMA位置与方向",
+        "detail": "对照同根TEMA≤中轨且比上一根高，少一项就不满足开多。"
+      },
+      {
+        "title": "阅读做空的非直觉组合",
+        "detail": "寻找RSI上穿70但TEMA下降的分歧，不把它画成普通RSI下穿卖点。"
+      }
+    ],
+    "chart": {
+      "kind": "rsi",
+      "note": "仅演示相关指标机制，非完整策略成交或回测结果。",
+      "focus": "RSI阈值穿越只是一个必要条件，TEMA与布林中轨过滤未在此简图完整执行。"
+    },
+    "status": "example",
+    "sourceNotes": [
+      {
+        "line": 102,
+        "text": "开多的RSI上穿30规则。"
+      },
+      {
+        "line": 117,
+        "text": "开空明确使用上穿70。"
+      },
+      {
+        "line": 135,
+        "text": "平多与开空条件相同。"
+      },
+      {
+        "line": 50,
+        "text": "多项指标只是示例展示，没有进入交易表达式。"
+      }
+    ],
+    "references": [
+      {
+        "label": "TA-Lib 指标函数与公式",
+        "url": "https://ta-lib.org/functions/"
+      },
+      {
+        "label": "Freqtrade 多空与杠杆",
+        "url": "https://www.freqtrade.io/en/stable/leverage/"
+      },
+      {
+        "label": "Freqtrade 杠杆回调与收益口径",
+        "url": "https://www.freqtrade.io/en/stable/strategy-callbacks/#leverage-callback"
+      },
+      {
+        "label": "Freqtrade 止损与追踪",
+        "url": "https://www.freqtrade.io/en/stable/stoploss/"
+      }
+    ]
+  },
+  {
+    "id": "futures/FOttStrategy",
+    "title": "自适应VAR与延迟OTT交叉",
+    "category": "合约",
+    "summary": "1小时策略用自定义OTT算法：先按9根涨跌动量调整VAR平滑速度，再用1.4%的跟踪带构造OTT并后移2根。VAR穿越OTT产生多空字段，ADX极强时离场；但类未启用can_short，不能认为空头分支已经能交易。",
+    "entry": [
+      {
+        "label": "做多信号",
+        "detail": "VAR上穿OTT。OTT采用源码pds=2、percent=1.4、9期CMO绝对值和shift(2)。"
+      },
+      {
+        "label": "做空字段",
+        "detail": "VAR下穿OTT会写enter_short，但类没有can_short=True；Freqtrade默认禁止开空。"
+      },
+      {
+        "label": "参数",
+        "detail": "没有Hyperopt参数；pds、percent、CMO窗口写死在函数内。populate_indicators连续调用ott两次分别取OTT和VAR，重复整套计算。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "信号退出",
+        "detail": "多空均在ADX14>60时发出退出字段；这是趋势极强条件，不是趋势衰弱条件。"
+      },
+      {
+        "label": "ROI",
+        "detail": "0分钟10%，30分钟75%，60分钟5%，120分钟2.5%；30分钟75%按源码原样保留。"
+      }
+    ],
+    "risk": [
+      "固定stoploss=-26.5%，回撤容忍很大。",
+      "trailing_stop=True；超过10%浮盈后使用5%的正向追踪距离。trailing_only_offset_is_reached=False意味着此前也会按原stoploss距离随有利价格追踪，不能理解成达到10%前完全关闭追踪。",
+      "源码未定义leverage回调，Freqtrade默认1倍；文件位于futures目录不代表自动加杠杆。若另行修改杠杆L，ROI/止损按含杠杆交易收益计算，价格容忍距离大致是收益阈值/L，且手续费、资金费率和清算边界仍需计入。",
+      "startup=18，VAR却从0初始化且OTT有递推与2根延迟；应检查起始值敏感性，18根并不证明稳定。"
+    ],
+    "indicators": [
+      {
+        "key": "OTT",
+        "usage": "自定义函数，pds2、percent1.4、CMO窗口9；不是调用TA-Lib OTT。",
+        "formula": "U=sum9(max(ΔC,0))，D=sum9(max(−ΔC,0))，a=(2/3)×|(U−D)/(U+D)|；VAR_t=aC_t+(1−a)VAR_(t−1)，初值0。基础长/短带=VAR×(1∓0.014)，按前带追踪并以穿越判方向；选定带MT后OTT=MT×(1±0.014/2)，最后shift(2)。零分母CMO以0填充。"
+      },
+      {
+        "key": "ADX",
+        "usage": "TA-Lib14期，只在>60退出使用。",
+        "formula": "TA-Lib：TR=max(H−L,|H−前收|,|L−前收|)；比较本根向上与向下移动，较大且为正的一侧记作±DM；Wilder平滑后±DI=100×平滑DM/平滑TR；DX=100×|+DI−−DI|/(+DI+−DI)，ADX再对DX作Wilder平滑。数值衡量强弱，不表示上涨方向。"
+      }
+    ],
+    "strengths": [
+      "自适应平滑把单向动量强弱直接映射到响应速度。",
+      "能用于学习自定义指标的递推状态和延迟对交叉的影响。"
+    ],
+    "weaknesses": [
+      "缺少can_short=True，源码双向意图与实际可交易方向不一致。",
+      "对整列重复循环构造跟踪带，再重复调用ott，数据越长性能成本越大。",
+      "极强趋势就退出可能截断趋势收益，宽止损又允许较大亏损。"
+    ],
+    "suitable": [
+      "学习OTT/VAR的指标设计和递推审查。",
+      "修复与核验后研究持续趋势中的自适应跟踪。"
+    ],
+    "unsuitable": [
+      "要求原样即用的双向合约系统。",
+      "历史长度频繁变化且未做recursive-analysis的运行。"
+    ],
+    "pitfalls": [
+      "shift(2)引用两根之前，是过去延迟，不能把它误报成负shift前视。",
+      "for i in df[UD]的循环变量未用，内部反复向量更新；应逐前缀重算核对递推稳定性，不能仅凭名称认为实现等同通行OTT。",
+      "from numpy.lib import math在部分新版NumPy中可能导入失败；需在运行环境核验。"
+    ],
+    "walkthrough": [
+      {
+        "title": "看VAR响应",
+        "detail": "上涨连贯时CMO绝对值增大，VAR更快追随价格；涨跌交替时变慢。"
+      },
+      {
+        "title": "比较延迟线",
+        "detail": "本根VAR与两根前形成的OTT比较，说明shift为何改变交叉时点。"
+      },
+      {
+        "title": "看退出与风险",
+        "detail": "即使VAR仍在OTT上方，ADX>60也会退出；单次交叉不是收益保证。"
+      }
+    ],
+    "chart": {
+      "kind": "ema",
+      "note": "仅演示相关指标机制，非完整策略成交或回测结果。",
+      "focus": "借平滑线理解交叉与滞后；简图不声称重现源码复杂OTT递推。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 35,
+        "text": "ott重复完整调用两次。"
+      },
+      {
+        "line": 48,
+        "text": "写了enter_short，但类属性未启用can_short。"
+      },
+      {
+        "line": 58,
+        "text": "ADX>60是退出条件。"
+      },
+      {
+        "line": 80,
+        "text": "OTT固定参数与零初始化递推。"
+      },
+      {
+        "line": 184,
+        "text": "OTT后移2根，属于过去数据。"
+      }
+    ],
+    "references": [
+      {
+        "label": "TA-Lib 指标函数与公式",
+        "url": "https://ta-lib.org/functions/"
+      },
+      {
+        "label": "Freqtrade 多空与杠杆",
+        "url": "https://www.freqtrade.io/en/stable/leverage/"
+      },
+      {
+        "label": "Freqtrade 杠杆回调与收益口径",
+        "url": "https://www.freqtrade.io/en/stable/strategy-callbacks/#leverage-callback"
+      },
+      {
+        "label": "Freqtrade 止损与追踪",
+        "url": "https://www.freqtrade.io/en/stable/stoploss/"
+      }
+    ]
+  },
+  {
+    "id": "futures/FSupertrendStrategy",
+    "title": "三重Supertrend一致后入场",
+    "category": "合约",
+    "summary": "1小时策略要求三组Supertrend方向一致开仓，退出只看对侧第二组，入场确认更严格、离场更敏感。指标由technical库提供；当前源码的tuple解包与官方实现一致，但类缺少can_short=True。",
+    "entry": [
+      {
+        "label": "做多",
+        "detail": "buy三组全部up且volume>0。内置buy_params采用(multiplier,period)=(4,8)、(7,9)、(1,8)。这是持续方向状态，不要求本根刚翻转。"
+      },
+      {
+        "label": "做空字段",
+        "detail": "sell三组全部down且volume>0；内置sell_params为(1,16)、(3,18)、(6,18)。未设置can_short=True，默认不能开空。"
+      },
+      {
+        "label": "参数默认差异",
+        "detail": "IntParameter声明buy/sell各组默认均为(1,14)、(3,10)、(4,10)，乘数范围1–7、周期7–21；常规加载会使用buy_params/sell_params覆盖声明default，外部参数文件还可能进一步覆盖。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "平多",
+        "detail": "仅第二组sell Supertrend（内置3倍、18期）为down即退出。"
+      },
+      {
+        "label": "平空字段",
+        "detail": "仅第二组buy（内置7倍、9期）为up即退出。"
+      },
+      {
+        "label": "ROI",
+        "detail": "0分钟10%，30分钟75%，60分钟5%，120分钟2.5%；时间为分钟，不是1小时根数。"
+      }
+    ],
+    "risk": [
+      "stoploss=-26.5%；startup=18，与内置最长18期相同，但搜索范围最高21且递推稳定需要额外历史。",
+      "trailing_stop=True；超过10%浮盈后使用5%的正向追踪距离。trailing_only_offset_is_reached=False意味着此前也会按原stoploss距离随有利价格追踪，不能理解成达到10%前完全关闭追踪。",
+      "源码未定义leverage回调，Freqtrade默认1倍；文件位于futures目录不代表自动加杠杆。若另行修改杠杆L，ROI/止损按含杠杆交易收益计算，价格容忍距离大致是收益阈值/L，且手续费、资金费率和清算边界仍需计入。"
+    ],
+    "indicators": [
+      {
+        "key": "SUPERTREND",
+        "usage": "technical.indicators.supertrend；按buy/sell共6组生成方向，只取up/down。",
+        "formula": "官方technical实现：TR来自TA-Lib TRANGE；波幅=TR的period期简单均值（不是Wilder ATR）。基础上下带=(H+L)/2±multiplier×波幅；最终带沿前带跟踪或在前收突破后重置；close突破当前有效带时切换另一条，close<ST为down，否则up。"
+      },
+      {
+        "key": "TRANGE",
+        "usage": "Supertrend内部使用的单根真实波幅。",
+        "formula": "TA-Lib：max(H−L,|H−前收|,|L−前收|)。"
+      }
+    ],
+    "strengths": [
+      "三尺度确认降低单一带反复翻转的敏感度。",
+      "仅一组控制退出，便于比较入场一致性与退出速度的权衡。"
+    ],
+    "weaknesses": [
+      "缺少can_short，不能按文件位置认定具备可执行双向交易。",
+      "三线完全同向后可能已走完大段行情，震荡仍会反复翻转。",
+      "12个超参和不寻常ROI表增加过拟合与误读概率。"
+    ],
+    "suitable": [
+      "学习波动自适应的趋势跟踪带。",
+      "研究多尺度一致性过滤对交易频率的作用。"
+    ],
+    "unsuitable": [
+      "窄幅盘整与假突破密集时期。",
+      "未经依赖版本核对就跨环境复制。"
+    ],
+    "pitfalls": [
+      "当前第230行按(value,direction)解包，已与technical官方main核对吻合；不能把旧版本印象写成确定调用错误。若安装版本API不同，应核验实际返回类型。",
+      "源码开头保留“实现未验证”的历史注释；网页教学不替代指标逐点验证。",
+      "ROI第一段10%与正追踪启动10%接近，ROI可能先平仓，不能保证每笔都进入追踪阶段。"
+    ],
+    "walkthrough": [
+      {
+        "title": "观察带宽",
+        "detail": "波幅放大时带远离中价；乘数越大越难翻转。"
+      },
+      {
+        "title": "数同向组",
+        "detail": "其中两组up仍不够，必须三组up且有成交量。"
+      },
+      {
+        "title": "比较退出敏感度",
+        "detail": "只要sell第二组down就可平多，不需要sell三组同时down。"
+      }
+    ],
+    "chart": {
+      "kind": "supertrend",
+      "note": "仅演示相关指标机制，非完整策略成交或回测结果。",
+      "focus": "用一条Supertrend示意波幅与翻转；实际策略须按不同参数检查六组方向。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 30,
+        "text": "buy_params覆盖声明的参数默认值。"
+      },
+      {
+        "line": 40,
+        "text": "sell_params与buy参数不同。"
+      },
+      {
+        "line": 175,
+        "text": "有空头字段但类缺少can_short。"
+      },
+      {
+        "line": 206,
+        "text": "退出只看第二组sell方向。"
+      },
+      {
+        "line": 230,
+        "text": "使用technical的(value,direction)返回接口。"
+      }
+    ],
+    "references": [
+      {
+        "label": "TA-Lib 指标函数与公式",
+        "url": "https://ta-lib.org/functions/"
+      },
+      {
+        "label": "Freqtrade 多空与杠杆",
+        "url": "https://www.freqtrade.io/en/stable/leverage/"
+      },
+      {
+        "label": "Freqtrade 杠杆回调与收益口径",
+        "url": "https://www.freqtrade.io/en/stable/strategy-callbacks/#leverage-callback"
+      },
+      {
+        "label": "Freqtrade 止损与追踪",
+        "url": "https://www.freqtrade.io/en/stable/stoploss/"
+      },
+      {
+        "label": "technical Supertrend 实际计算源码",
+        "url": "https://github.com/freqtrade/technical/blob/main/technical/indicators/supertrend.py"
+      }
+    ]
+  },
+  {
+    "id": "futures/TrendFollowingStrategy",
+    "title": "EMA穿越与OBV方向检查",
+    "category": "合约",
+    "summary": "5分钟样例用close穿越Pandas EMA20与OBV单根方向形成入场条件。源码没有启用做空，而且正常正成交量下，两侧退出把价格穿越方向与OBV方向写成互相矛盾的组合。",
+    "entry": [
+      {
+        "label": "开多",
+        "detail": "close本根>EMA20、前根close≤前根EMA20，并且OBV本根>前根。"
+      },
+      {
+        "label": "空头字段",
+        "detail": "close本根<EMA20、前根close≥前根EMA20，并且OBV本根<前根；没有can_short=True，默认不会实际开空。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "平多源码",
+        "detail": "close下穿EMA20，同时OBV上涨。对EMA递推和正volume而言，下穿必要求本根close<前收，OBV应下降，所以组合不可达。"
+      },
+      {
+        "label": "平空源码",
+        "detail": "close上穿EMA20，同时OBV下降；同理与正成交量下的OBV定义矛盾。"
+      },
+      {
+        "label": "实际退出依赖",
+        "detail": "因此主要剩ROI/止损/追踪等引擎退出：0分钟15%、30分钟10%、60分钟5%。"
+      }
+    ],
+    "risk": [
+      "stoploss=-26.5%，无单独startup_candle_count声明。",
+      "trailing_stop=True；超过10%浮盈后使用5%的正向追踪距离。trailing_only_offset_is_reached=False意味着此前也会按原stoploss距离随有利价格追踪，不能理解成达到10%前完全关闭追踪。",
+      "源码未定义leverage回调，Freqtrade默认1倍；文件位于futures目录不代表自动加杠杆。若另行修改杠杆L，ROI/止损按含杠杆交易收益计算，价格容忍距离大致是收益阈值/L，且手续费、资金费率和清算边界仍需计入。"
+    ],
+    "indicators": [
+      {
+        "key": "EMA",
+        "usage": "Pandas close.ewm(span=20,adjust=False).mean()，不是TA-Lib EMA。",
+        "formula": "EMA_t=α×close_t+(1−α)×EMA_(t−1)，α=2/(n+1)。TA-Lib通常以首n根SMA初始化，Pandas ewm(adjust=False)则从首值递推，热身初期不能视为逐点相同。 此处明确从首个close开始递推，α=2/21。"
+      },
+      {
+        "key": "OBV",
+        "usage": "TA-Lib(close,volume)，只比较一根增减，没有长期斜率或背离计算。",
+        "formula": "若C_t>C_(t−1)，OBV_t=OBV_(t−1)+V_t；若下跌减V_t；不变则不变。因此正成交量下单根OBV方向与收盘涨跌方向一致。"
+      }
+    ],
+    "strengths": [
+      "代码短，适合练习逐项验证布尔条件。",
+      "EMA与OBV展示了价与量指标的不同量纲。"
+    ],
+    "weaknesses": [
+      "正常数据下退出信号不可达，策略意图与行为脱节。",
+      "未启用做空，双向字段不等于双向交易。",
+      "OBV单根变化几乎只是涨跌加正量确认，不能替代真正的量价背离分析。"
+    ],
+    "suitable": [
+      "用于发现不可能条件的源码教学。",
+      "修正后做EMA趋势系统的对照实验。"
+    ],
+    "unsuitable": [
+      "原样作为完整趋势进出场系统。",
+      "只凭图中入场箭头评估策略完整性。"
+    ],
+    "pitfalls": [
+      "以正成交量证明：下穿要求C_t<EMA_(t−1)≤C_(t−1)，所以OBV必下降；上穿的推理对称。",
+      "两次重复导入IStrategy不改变交易规则；重点缺陷在条件而非导入风格。"
+    ],
+    "walkthrough": [
+      {
+        "title": "检查入场",
+        "detail": "close从EMA下方到上方时，本根close也必高于前收，正量下OBV自然向上。"
+      },
+      {
+        "title": "验证卖出矛盾",
+        "detail": "取前收100、前EMA99、本收98：下穿成立，OBV却减去本根volume，不可能同时上涨。"
+      },
+      {
+        "title": "追踪最终出口",
+        "detail": "没有有效signal exit时，查看ROI、固定止损和追踪何者先触发。"
+      }
+    ],
+    "chart": {
+      "kind": "ema",
+      "note": "仅演示相关指标机制，非完整策略成交或回测结果。",
+      "focus": "用close与EMA的交叉推导单根OBV方向，发现退出条件冲突。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 32,
+        "text": "使用Pandas EMA20，从首值递推。"
+      },
+      {
+        "line": 45,
+        "text": "有enter_short但没有can_short声明。"
+      },
+      {
+        "line": 56,
+        "text": "平多要求向下交叉与OBV上涨，正常正量下互斥。"
+      },
+      {
+        "line": 63,
+        "text": "平空的矛盾与平多对称。"
+      }
+    ],
+    "references": [
+      {
+        "label": "TA-Lib 指标函数与公式",
+        "url": "https://ta-lib.org/functions/"
+      },
+      {
+        "label": "Freqtrade 多空与杠杆",
+        "url": "https://www.freqtrade.io/en/stable/leverage/"
+      },
+      {
+        "label": "Freqtrade 杠杆回调与收益口径",
+        "url": "https://www.freqtrade.io/en/stable/strategy-callbacks/#leverage-callback"
+      },
+      {
+        "label": "Freqtrade 止损与追踪",
+        "url": "https://www.freqtrade.io/en/stable/stoploss/"
+      }
+    ]
+  },
+  {
+    "id": "futures/VolatilitySystem",
+    "title": "3小时波动突破与一次追加仓位",
+    "category": "合约",
+    "summary": "在1小时K线上，使用安全重采样的3小时收盘变化，判断是否超过两倍ATR14并顺突破方向开仓。反向突破平仓，初始只投入建议保证金的一半，新一轮同向信号最多再补一次，杠杆回调返回2倍。",
+    "entry": [
+      {
+        "label": "做多",
+        "detail": "合并后的3小时close_change>atr.shift(1)，其中atr列已经是3小时ATR14×2。"
+      },
+      {
+        "label": "做空",
+        "detail": "−close_change>atr.shift(1)，can_short=True。"
+      },
+      {
+        "label": "时点细节",
+        "detail": "shift(1)发生在合并回1小时之后，因此是前一根1小时的合并值，不能直接说成前一根3小时ATR。持续满足条件时多根1小时都可能标记入场，源码注释的crossed_above并未启用。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "反向突破退出",
+        "detail": "enter_long=1时exit_short=1；enter_short=1时exit_long=1。"
+      },
+      {
+        "label": "ROI",
+        "detail": "minimal_roi={0:100}是10000%收益阈值，基本把常规ROI退出放到极远；不是100%或关闭配置。"
+      }
+    ],
+    "risk": [
+      "stoploss=-1，即交易收益−100%的极宽边界。合约实际有效止损还受清算价格及liquidation_buffer约束，不能承诺能等到−100%。",
+      "leverage()明确返回2.0；引擎会受交易对max_leverage上限限制。",
+      "custom_stake_amount返回proposed_stake/2，初次仅一半建议保证金；仍受引擎最小/最大仓位及余额约束。",
+      "position_adjustment_enable=True；当前同向signal=1且前根≠1、成功入场次数<2、最近订单早于前一小时边界，才返回trade.stake_amount追加。通常是把现有保证金再加一份，不是每根连续加仓。",
+      "未显式startup_candle_count；3小时ATR14需要至少约42小时外加首TR、对齐及稳定余量，数据不足时不能把NaN当成0。"
+    ],
+    "indicators": [
+      {
+        "key": "ATR",
+        "usage": "3小时OHLC，TA-Lib14期后乘2，再合并回1小时。",
+        "formula": "TA-Lib：TR=max(H−L,|H−前收|,|L−前收|)，首个ATR取TR的n期均值，之后ATR_t=((n−1)×ATR_(t−1)+TR_t)/n。价格单位与close相同，不是百分比。"
+      },
+      {
+        "key": "PRICE_CHANGE",
+        "usage": "3小时相邻close差以及绝对差；absolute列只用于绘图。",
+        "formula": "ΔC_3h=C_当前3h−C_上一3h；abs_close_change=|ΔC_3h|。与2×ATR比较是价格差，不是涨跌百分比。"
+      }
+    ],
+    "strengths": [
+      "用ATR让突破门槛随波动环境变化。",
+      "仓位追加同时要求新信号与次数约束，比持续信号无限加仓更清晰。"
+    ],
+    "weaknesses": [
+      "止损极宽，依赖反向大突破可能承受很长回撤。",
+      "超长大K线突破常在行情已有较大移动后追入。",
+      "合并后再shift使门槛在3小时区间内的语义不同于纯3小时策略。",
+      "2倍仓位与后续追加会放大保证金使用和回撤。"
+    ],
+    "suitable": [
+      "研究低频大波幅趋势突破。",
+      "学习custom_stake_amount、adjust_trade_position和leverage接口。"
+    ],
+    "unsuitable": [
+      "窄幅震荡、突然尖刺后立刻反转。",
+      "保证金有限却把−100%误当成可安全承受的止损。"
+    ],
+    "pitfalls": [
+      "读取的是最近已分析K线；实盘回调频率与回测每根处理不同，需要核对订单与追加时点。",
+      "条件是大于而非crossed_above，连续信号不会在每一根都成为新的追加触发。",
+      "3小时ATR倍数已经在指标层乘2，入口不要再误乘一次。"
+    ],
+    "walkthrough": [
+      {
+        "title": "比较3小时幅度",
+        "detail": "把连续三根1小时合并，计算这组收盘与上一组收盘之差。"
+      },
+      {
+        "title": "检查突破阈值",
+        "detail": "只有涨幅>2ATR开多；同样大小的负差才开空。"
+      },
+      {
+        "title": "看仓位节奏",
+        "detail": "初次半仓，信号连续保持不加；消失后再次出现且订单/次数条件通过，才追加当前保证金额。"
+      },
+      {
+        "title": "检查退出",
+        "detail": "出现反向大突破时平原方向，而不是ATR自然回落就平仓。"
+      }
+    ],
+    "chart": {
+      "kind": "execution",
+      "note": "仅演示相关指标机制，非完整策略成交或回测结果。",
+      "focus": "观察初次半仓与新同向信号追加的区别；未模拟清算、资金费率和订单。"
+    },
+    "status": "caution",
+    "sourceNotes": [
+      {
+        "line": 62,
+        "text": "3小时ATR14已乘2。"
+      },
+      {
+        "line": 90,
+        "text": "shift在合并后的1小时序列上执行。"
+      },
+      {
+        "line": 116,
+        "text": "首笔建议保证金减半。"
+      },
+      {
+        "line": 134,
+        "text": "新信号与成功入场次数限制追加。"
+      },
+      {
+        "line": 157,
+        "text": "实际杠杆回调返回2倍。"
+      }
+    ],
+    "references": [
+      {
+        "label": "TA-Lib 指标函数与公式",
+        "url": "https://ta-lib.org/functions/"
+      },
+      {
+        "label": "Freqtrade 多空与杠杆",
+        "url": "https://www.freqtrade.io/en/stable/leverage/"
+      },
+      {
+        "label": "Freqtrade 杠杆回调与收益口径",
+        "url": "https://www.freqtrade.io/en/stable/strategy-callbacks/#leverage-callback"
+      },
+      {
+        "label": "Freqtrade 止损与追踪",
+        "url": "https://www.freqtrade.io/en/stable/stoploss/"
+      },
+      {
+        "label": "technical 重采样与安全合并源码",
+        "url": "https://github.com/freqtrade/technical/blob/main/technical/util.py"
+      }
+    ]
+  },
+  {
+    "id": "lookahead_bias/Zeus",
+    "title": "全局归一化如何污染历史买卖点",
+    "category": "未来数据偏差",
+    "summary": "4小时做多规则把Ichimoku基准线与KST动量差映射到0–1，再用阈值筛选买卖。两次归一化都读取整列未来极值，目录README明确列为前视偏差练习；本条用于识别问题，不能按历史漂亮收益当成可用策略。",
+    "entry": [
+      {
+        "label": "内置参数下开多",
+        "detail": "buy_params覆盖后，归一化Ichimoku基准线<0.0128。它是整段样本的相对低位，不是“价格上穿云层”。"
+      },
+      {
+        "label": "声明default",
+        "detail": "buy_cat=<R，buy_real声明0.11908、decimals4（通常取0.1191）；参数可选>R/=R/<R，数值范围0.001–0.999。未启用做空。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "内置参数下平多",
+        "detail": "sell_params为=R、0.9455，即np.isclose(归一化KST差,0.9455)，不是>0.9455。"
+      },
+      {
+        "label": "声明default与ROI",
+        "detail": "sell_cat默认>R、sell_real声明0.59608（4位精度）。ROI：0分钟56.4%、567分钟27.3%、2814分钟12%、7675分钟0%。"
+      }
+    ],
+    "risk": [
+      "stoploss=-25.6%；源码未启用移动止损；未定义杠杆回调、仓位回调或can_short。",
+      "收益与退出规则无法修复前视污染，原有参数需要在无泄漏特征上重新训练与独立检验。"
+    ],
+    "indicators": [
+      {
+        "key": "ICHIMOKU",
+        "usage": "Python ta库的ichimoku_base_line(high,low,window1=9,window2=26,visual=False)，只用基准线。",
+        "formula": "Kijun=(26根最高H+26根最低L)/2；window1=9是函数接口参数，但基准线核心窗口为26。随后被全局min/max归一化。"
+      },
+      {
+        "key": "KST",
+        "usage": "Python ta.trend.KSTIndicator：ROC10/15/20/30，平滑窗口10/10/10/15，signal9。",
+        "formula": "ROC_n=(C/C_(t−n)−1)；KST=100×[SMA10(ROC10)+2SMA10(ROC15)+3SMA10(ROC20)+4SMA15(ROC30)]；signal=SMA9(KST)，kst_diff=KST−signal。"
+      },
+      {
+        "key": "NORMALIZE",
+        "usage": "基准线和KST差各自整列缩放。",
+        "formula": "全样本归一化N(x_t)=(x_t−min(x全列))/(max(x全列)−min(x全列))。未来极值会改变历史分母和分子；例如原[10,20,30]中的20被映射到0.5，后来新增100后同一个20变成1/9。应以当时可得的滚动/扩展历史尺度替代并重新验证；常量列还会出现0/0。"
+      }
+    ],
+    "strengths": [
+      "作为反例，只有两列即可直观看出未来极值影响历史。",
+      "适合比较原始指标与归一化指标的不同经济含义。"
+    ],
+    "weaknesses": [
+      "全局极值包含未来，回测信号不具备当时可执行性。",
+      "np.isclose匹配窄小目标点可能导致退出极少。",
+      "高ROI、宽止损和源码历史成绩不能证明可迁移收益。"
+    ],
+    "suitable": [
+      "前视偏差教学与lookahead-analysis练习。",
+      "逐前缀重算：比较同一日期在不同数据终点下的信号。"
+    ],
+    "unsuitable": [
+      "未经修复的实盘交易或收益宣传。",
+      "将全样本0–1值当成稳定的跨样本阈值。"
+    ],
+    "pitfalls": [
+      "这里import ta是Python Technical Analysis Library，并非talib.abstract，公式和初值应按相应库核对。",
+      "visual=False的基准线本身无需未来数据，偏差来自后续min/max，不应把问题错误归因于全部Ichimoku。"
+    ],
+    "walkthrough": [
+      {
+        "title": "固定历史K线",
+        "detail": "选一根当时基准线20、历史范围10–30的K线，归一化为0.5。"
+      },
+      {
+        "title": "追加未来极值",
+        "detail": "后来基准线升到100，旧K线仍是20但归一化变成0.111；固定阈值的真假会变化。"
+      },
+      {
+        "title": "复查退出",
+        "detail": "KST差同样受未来范围影响，np.isclose的成立时点也可能被改写。"
+      }
+    ],
+    "chart": {
+      "kind": "price",
+      "note": "仅演示相关指标机制，非完整策略成交或回测结果。",
+      "focus": "用K线与追加极端价格理解未来样本如何倒改过去的归一化值；不画可信成交结果。"
+    },
+    "status": "biased",
+    "sourceNotes": [
+      {
+        "line": 38,
+        "text": "内置buy_params采用<0.0128。"
+      },
+      {
+        "line": 44,
+        "text": "内置sell_params为接近0.9455。"
+      },
+      {
+        "line": 101,
+        "text": "基准线全局min/max产生前视。"
+      },
+      {
+        "line": 104,
+        "text": "KST差重复同样的全局归一化。"
+      }
+    ],
+    "references": [
+      {
+        "label": "TA-Lib 指标函数与公式",
+        "url": "https://ta-lib.org/functions/"
+      },
+      {
+        "label": "Freqtrade 前视偏差检测",
+        "url": "https://www.freqtrade.io/en/stable/lookahead-analysis/"
+      },
+      {
+        "label": "Python ta 指标文档",
+        "url": "https://technical-analysis-library-in-python.readthedocs.io/en/latest/ta.html"
+      }
+    ]
+  },
+  {
+    "id": "lookahead_bias/wtc",
+    "title": "WaveTrend交叉中的缩放泄漏",
+    "category": "未来数据偏差",
+    "summary": "30分钟规则结合WaveTrend交叉、随机指标与三个数值区间。MinMaxScaler在整个回测矩阵fit_transform会让未来极值影响过去；另外内置卖出def区间上下界颠倒，按源码无法产生正常卖出信号。",
+    "entry": [
+      {
+        "label": "开多四项AND",
+        "detail": "wt1上穿wt2；归一化wt1在[0.0102,0.8633]；归一化slowk在[0.6864,0.9133]；def=slowk−wt1在[0.0019,0.9609]。数值来自buy_params。"
+      },
+      {
+        "label": "参数空间",
+        "detail": "def上下界在−1到1，wt1/slowk上下界在0到1，精度4位；买入各组声明default为min −0.4676、max0.4393，与内置参数不同，部分声明越出自身0–1范围。仅做多。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "平多源码",
+        "detail": "wt1下穿wt2；wt1在[0.0628,0.82]；slowk在[0.4461,0.9821]；def.between(−0.5377,−0.7979)。最后一项下界>上界，不能成立。"
+      },
+      {
+        "label": "声明与ROI",
+        "detail": "sell各组声明min0.6519、max−0.9512也颠倒且部分越界。ROI：0分钟30.873%、569分钟16.689%、3211分钟6.473%、7617分钟0%。"
+      }
+    ],
+    "risk": [
+      "stoploss=-12.8%，未显式追踪止损、杠杆或自定义仓位；未启用做空。",
+      "失效的信号退出意味着常规离场更多依赖ROI/止损；不能把回测出场都解释为WaveTrend死叉。"
+    ],
+    "indicators": [
+      {
+        "key": "WAVETREND",
+        "usage": "自定义组合，TA-Lib EMA10/21与SMA4；ci分母常数实际为0.0015。",
+        "formula": "ap=(H+L+C)/3；esa=EMA10(ap)；d=EMA10(|ap−esa|)；ci=(ap−esa)/(0.0015d)；wt1=EMA21(ci)，wt2=SMA4(nan_to_num(wt1))。注意代码是0.0015而非常见示例的0.015。"
+      },
+      {
+        "key": "STOCH",
+        "usage": "TA-Lib STOCH(dataframe,14)的slowk：fastK14，slowK默认3，slowD默认3。",
+        "formula": "rawK=100×(C−LL14)/(HH14−LL14)，slowk=SMA3(rawK)，slowd=SMA3(slowk)。源码虽在注释说Stoch-RSI，实际调用的是基于高低收的STOCH。"
+      },
+      {
+        "key": "NORMALIZE",
+        "usage": "sklearn MinMaxScaler.fit_transform(dataframe.iloc[:,6:])。",
+        "formula": "全样本归一化N(x_t)=(x_t−min(x全列))/(max(x全列)−min(x全列))。未来极值会改变历史分母和分子；例如原[10,20,30]中的20被映射到0.5，后来新增100后同一个20变成1/9。应以当时可得的滚动/扩展历史尺度替代并重新验证；常量列还会出现0/0。 每一列独立缩放，也会改变wt1和wt2之间原本的相对关系；这里def是相减，未做相除。"
+      }
+    ],
+    "strengths": [
+      "适合讲解“指标正确但预处理泄漏”的常见错误。",
+      "区间过滤配合交叉，能练习分项检查为什么无信号。"
+    ],
+    "weaknesses": [
+      "全样本fit_transform泄漏未来极值。",
+      "内置卖出def区间反向，exit_long条件不可达。",
+      "裸except吞掉所有异常并填固定值，运行故障可能伪装为正常无交易。",
+      "按列位置[:,6:]取特征，对输入列顺序敏感。"
+    ],
+    "suitable": [
+      "数据预处理泄漏与参数边界审计练习。",
+      "对比独立缩放前后的双线交叉变化。"
+    ],
+    "unsuitable": [
+      "原样实盘或展示策略盈利排名。",
+      "未检查异常分支就大规模优化参数。"
+    ],
+    "pitfalls": [
+      "源码注释“Stoch-RSI”“dividing”与实际STOCH、def减法不一致，应以代码为准。",
+      "两条相关线各自缩放之后，交叉不再等同于原始WaveTrend交叉。",
+      "异常时wt1=0、wt2=10、def=100、slowk=1000，一般不会产生期望信号，也没有报错日志。"
+    ],
+    "walkthrough": [
+      {
+        "title": "先算原始曲线",
+        "detail": "由典型价算wt1/wt2，标记原始交叉。"
+      },
+      {
+        "title": "加入未来极值",
+        "detail": "未来一段wt1或wt2的新高改变各自缩放比例，过去的交叉位置也可能变化。"
+      },
+      {
+        "title": "逐项检验退出",
+        "detail": "即便下穿与前两个区间成立，def必须同时≥−0.5377且≤−0.7979，这是空集。"
+      }
+    ],
+    "chart": {
+      "kind": "price",
+      "note": "仅演示相关指标机制，非完整策略成交或回测结果。",
+      "focus": "关注原始K线追加后历史缩放值变化；本图不等价于WaveTrend整套计算。"
+    },
+    "status": "biased",
+    "sourceNotes": [
+      {
+        "line": 61,
+        "text": "sell_max比sell_min更小。"
+      },
+      {
+        "line": 108,
+        "text": "WaveTrend分母写0.0015。"
+      },
+      {
+        "line": 116,
+        "text": "实际调用STOCH而非STOCHRSI。"
+      },
+      {
+        "line": 122,
+        "text": "全样本fit_transform是前视偏差来源。"
+      },
+      {
+        "line": 128,
+        "text": "裸except隐藏计算失败。"
+      }
+    ],
+    "references": [
+      {
+        "label": "TA-Lib 指标函数与公式",
+        "url": "https://ta-lib.org/functions/"
+      },
+      {
+        "label": "Freqtrade 前视偏差检测",
+        "url": "https://www.freqtrade.io/en/stable/lookahead-analysis/"
+      }
+    ]
+  },
+  {
+    "id": "lookahead_bias/GodStraNew",
+    "title": "动态指标基因与前视偏差反例",
+    "category": "未来数据偏差",
+    "summary": "4小时策略为买卖各生成三条动态条件，指标、输出列、周期、运算符和阈值都可优化。它对整列指标归一化后再比较，存在明确前视偏差；默认配置还包含未入候选集的函数与输入域问题，适合审计教学。",
+    "entry": [
+      {
+        "label": "默认条件0",
+        "detail": "N(SMA100)/N(ADD-20)<0.9；声明0.89009在DECIMALS=1下初始化四舍五入为0.9。"
+      },
+      {
+        "label": "默认条件1",
+        "detail": "N(WILLR50)<0.6（声明0.56953）。函数仍先计算配对ASIN-6，虽然这个<R操作只比较常数。"
+      },
+      {
+        "label": "默认条件2",
+        "detail": "N(CDLHANGINGMAN)下穿N(CDLEVENINGSTAR)，三条AND才写enter_long；声明0.38365→0.4在CB操作下不使用。"
+      },
+      {
+        "label": "选择语法",
+        "detail": "A-n通常为指标与周期，A-k-n为第k个输出（0起）。没有timeperiod参数的函数不会因尾缀变成n期；形态CDL的周期统一重写为0。候选周期为5/6/12/15/50/55/100/110。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "默认条件0",
+        "detail": "N(CDLUPSIDEGAP2CROWS)<0.1（声明0.09731、精度1）；也会计算配对CDLSHOOTINGSTAR。"
+      },
+      {
+        "label": "默认条件1",
+        "detail": "operator=D保留默认volume>10，并非完全取消条件；仍先算CDLHARAMICROSS和FAMA，阈值0.8不参与。"
+      },
+      {
+        "label": "默认条件2",
+        "detail": "N(CDL2CROWS)/N(CDLMATHOLD)>0.9（声明0.87267），三条AND。"
+      },
+      {
+        "label": "ROI与覆盖",
+        "detail": "0分钟59.8%、644分钟16.6%、3269分钟11.5%、7289分钟0%。源码没有buy_params/sell_params字典；外部参数文件仍可能覆盖。"
+      }
+    ],
+    "risk": [
+      "stoploss=-12.8%；未定义移动止损、leverage回调、自定义仓位或can_short，仅做多。",
+      "止损和ROI不能修复信号中的未来数据。去偏差后需要重新优化与独立验证，不能保留原收益结论。"
+    ],
+    "indicators": [
+      {
+        "key": "SMA",
+        "usage": "默认SMA-100，TA-Lib close100期。",
+        "formula": "SMA100=最近100根close之和/100；之后做全样本min/max缩放。"
+      },
+      {
+        "key": "ADD",
+        "usage": "默认ADD-20，作为SMA100的比值分母。",
+        "formula": "TA-Lib ADD(x,y)=x+y；abstract按默认映射取两输入（通常high与low）。不是20期求和，timeperiod尾缀不设置周期。"
+      },
+      {
+        "key": "WILLR",
+        "usage": "默认WILLR-50，与常数比较。",
+        "formula": "TA-Lib %R=−100×(最高H50−C)/(最高H50−最低L50)，之后归一化。"
+      },
+      {
+        "key": "ASIN",
+        "usage": "默认ASIN-6，虽然比较常数，仍会先请求这列。",
+        "formula": "TA-Lib arcsin(close)，单位弧度，实数域必须在[−1,1]；原始价格可能超域产生NaN。6不是窗口，源码先计算后归一化。"
+      },
+      {
+        "key": "CDLHANGINGMAN",
+        "usage": "默认买入形态1，尾缀20被重写为0。",
+        "formula": "TA-Lib上吊线：小实体、长下影、短上影，按历史蜡烛尺度和位置规则输出−100或0等离散形态值；不是20期连续指标。"
+      },
+      {
+        "key": "CDLEVENINGSTAR",
+        "usage": "默认买入形态2，尾缀50被重写为0。",
+        "formula": "TA-Lib晚星：长阳、向上跳空的小实体、随后阴线侵入首阳实体，穿透程度按库默认检查；输出看跌标记或0。"
+      },
+      {
+        "key": "CDLUPSIDEGAP2CROWS",
+        "usage": "默认卖出条件0，尾缀5被重写。",
+        "formula": "TA-Lib向上跳空两乌鸦：首阳后上方阴线，再一根阴线包住前阴实体且仍在首根收盘上方；满足规则输出看跌分数。"
+      },
+      {
+        "key": "CDLSHOOTINGSTAR",
+        "usage": "默认卖出配对形态，尾缀150被重写。",
+        "formula": "TA-Lib流星线：小实体、长上影、短下影及相对位置条件，阈值依据历史蜡烛平均尺度，输出看跌分数或0。"
+      },
+      {
+        "key": "CDLHARAMICROSS",
+        "usage": "默认第二卖出条件请求；D不使用其值。",
+        "formula": "TA-Lib十字孕线：前根较长实体，后根十字星处在前根实体之内；返回方向性离散分数或0。"
+      },
+      {
+        "key": "MAMA",
+        "usage": "默认MAMA-1-100选择第二输出FAMA；D仍先计算。",
+        "formula": "TA-Lib以Hilbert相位变化决定α并约束在slowlimit与fastlimit之间；MAMA=αC+(1−α)MAMA前值，FAMA=(α/2)MAMA+(1−α/2)FAMA前值。默认边界0.05/0.5，100尾缀不设置周期。"
+      },
+      {
+        "key": "CDL2CROWS",
+        "usage": "默认第三卖出条件分子。",
+        "formula": "TA-Lib两乌鸦：长阳后上方跳空阴线，再一阴线回到首阳实体内部，输出−100或0。"
+      },
+      {
+        "key": "CDLMATHOLD",
+        "usage": "默认第三卖出条件分母。",
+        "formula": "TA-Lib五根铺垫形态：趋势大实体后数根小实体回调，最后恢复原方向，满足多根相对位置和穿透规则输出形态分数。"
+      },
+      {
+        "key": "NORMALIZE",
+        "usage": "gene_calculator各分支返回前都执行normalize。",
+        "formula": "N(x_t)=(x_t−min(全列x))/(max(全列x)−min(全列x))；未来新极值会改写旧N(x)。常量形态列分母为0，比值分母也可能为0。"
+      }
+    ],
+    "strengths": [
+      "作为教学框架展示统一条件语法。",
+      "可同时训练前视检测、参数域和默认值审计。"
+    ],
+    "weaknesses": [
+      "normalize使用整列min/max，未来数据会改写历史信号。",
+      "巨大指标搜索空间和三条件组合易造成过拟合。",
+      "默认ADD/ASIN不在已汇总候选类别中，20/150也不在候选周期表。",
+      "ASIN可能超域；常量形态归一化和比值可能除零。"
+    ],
+    "suitable": [
+      "前视偏差与Hyperopt参数空间审计练习。",
+      "动态规则语言的教学原型。"
+    ],
+    "unsuitable": [
+      "将含偏差的历史成绩当作可交易优势。",
+      "未检查输入域与缺失值就启动大规模优化。"
+    ],
+    "pitfalls": [
+      "DECIMALS=1，不能直接把声明的五位小数当运行阈值。",
+      "D保留volume>10，其他运算分支覆盖这个初始条件，因此并非全部条件都检查volume。",
+      "UT/DT/OT相对4期SMA；CUT/CDT/COT再要求交叉。趋势SMA生成会把原指标列覆写为原始值，可能造成原值与归一化均线的量纲混用。",
+      ">、<、=比较两列；C/CA/CB为任意交叉/上穿/下穿；>R等比较常数；/>R等比较归一化两列的比值。"
+    ],
+    "walkthrough": [
+      {
+        "title": "拆解名字",
+        "detail": "SMA-100是100期均线；MAMA-1-100取FAMA，但MAMA没有timeperiod=100参数。"
+      },
+      {
+        "title": "展开条件",
+        "detail": "分别检查三个布尔条件；CB不使用real_num，D仍保留volume>10。"
+      },
+      {
+        "title": "做前缀对照",
+        "detail": "截断到某根K线算一次，再加未来新高重算，观察过去归一化值和信号是否变化。"
+      },
+      {
+        "title": "核对有效默认",
+        "detail": "声明0.89009在1位精度下是0.9，而不是源码表面显示的五位小数。"
+      }
+    ],
+    "chart": {
+      "kind": "price",
+      "note": "仅演示相关指标机制，非完整策略成交或回测结果。",
+      "focus": "用追加未来K线理解全样本归一化如何倒改历史；不模拟动态组合收益。"
+    },
+    "status": "biased",
+    "sourceNotes": [
+      {
+        "line": 208,
+        "text": "候选周期表。"
+      },
+      {
+        "line": 232,
+        "text": "DECIMALS=1决定有效精度。"
+      },
+      {
+        "line": 256,
+        "text": "全局min/max前视来源。"
+      },
+      {
+        "line": 330,
+        "text": "D保留volume>10，其他操作覆盖。"
+      },
+      {
+        "line": 480,
+        "text": "默认ADD-20/ASIN-6与搜索空间不一致。"
+      },
+      {
+        "line": 522,
+        "text": "默认第二卖出操作为D。"
+      }
+    ],
+    "references": [
+      {
+        "label": "TA-Lib 指标函数与公式",
+        "url": "https://ta-lib.org/functions/"
+      },
+      {
+        "label": "Freqtrade 前视偏差检测",
+        "url": "https://www.freqtrade.io/en/stable/lookahead-analysis/"
+      },
+      {
+        "label": "Freqtrade 参数精度与默认值实现",
+        "url": "https://github.com/freqtrade/freqtrade/blob/develop/freqtrade/strategy/parameters.py"
+      }
+    ]
+  },
+  {
+    "id": "lookahead_bias/DevilStra",
+    "title": "按交易对分配规则的动态策略反例",
+    "category": "未来数据偏差",
+    "summary": "4小时做多策略把9套三条件规则组成spell，按静态白名单序号分别分配买入与卖出预设。动态指标延续GodStraNew的全列min/max缩放，存在明确前视偏差；白名单换顺序还会把规则转交给另一交易对。",
+    "entry": [
+      {
+        "label": "按序号选择",
+        "detail": "取current_whitelist中当前pair的位置i，用buy_spell列表第i项选预设，三条件AND；没有做空。内置buy_params首项Zi、第二Lu、第三Ra。静态白名单顺序也是策略参数。"
+      },
+      {
+        "label": "声明默认与内置覆盖",
+        "detail": "CategoricalParameter默认spell_pot[0]来自随机生成的候选；导入时构造1000个长度269的字符串且未固定seed。buy_params/sell_params加载后提供固定长列表，外部参数文件还可能覆盖。"
+      },
+      {
+        "label": "预设 Zi 买入",
+        "detail": "N(MINUS_DI-50)/N(BOP-4) > 0.1763；且 N(HT_TRENDMODE-50) 上穿 N(MACD-0-50)；且 CORREL-128 使用CDT（相对4期SMA）。"
+      },
+      {
+        "label": "预设 Gu 买入",
+        "detail": "N(MAMA-1-50) < 0.2644；且 volume>10（D）；且 volume>10（D）。"
+      },
+      {
+        "label": "预设 Lu 买入",
+        "detail": "ADD-28 使用DT（相对4期SMA）；且 volume>10（D）；且 N(AVGPRICE-12) 交叉 N(ADD-12)。"
+      },
+      {
+        "label": "预设 La 买入",
+        "detail": "N(T3-14)/N(WMA-14) > 0.0551；且 N(BETA-14) > N(MAMA-1-14)；且 N(HT_PHASOR-1-14) > 0.3871。"
+      },
+      {
+        "label": "预设 Si 买入",
+        "detail": "N(MA-14) < N(MACDEXT-2-14)；且 N(ADXR-14)/N(CORREL-14) < 0.8286；且 N(CDLMARUBOZU-14) < 0.6512。"
+      },
+      {
+        "label": "预设 Pa 买入",
+        "detail": "volume>10（D）；且 N(AD-15) > N(APO-60)；且 N(MINUS_DI-12) 上穿 N(BBANDS-0-60)。"
+      },
+      {
+        "label": "预设 De 买入",
+        "detail": "N(CMO-12) < N(HT_DCPERIOD-12)；且 volume>10（D）；且 N(MACDEXT-0-15) < N(MACDFIX-1-15)。"
+      },
+      {
+        "label": "预设 Ra 买入",
+        "detail": "volume>10（D）；且 N(EMA-12) < N(SMA-5)；且 N(EMA-5)/N(SMA-6) < 0.0541。"
+      },
+      {
+        "label": "预设 Cu 买入",
+        "detail": "N(SMA-110) < 0.5；且 N(SMA-55) < N(SMA-110)；且 N(SMA-15) 上穿 N(SMA-5)。"
+      }
+    ],
+    "exit": [
+      {
+        "label": "卖出独立选择",
+        "detail": "sell_spell同样使用pair位置i，但映射独立。内置首项La、第二Pa、第三De；首个pair实际Zi买入、La卖出。"
+      },
+      {
+        "label": "ROI",
+        "detail": "0分钟57.4%、1757分钟15.8%、3804分钟8.9%、6585分钟0%。"
+      },
+      {
+        "label": "预设 Zi 卖出",
+        "detail": "COS-50 使用DT（相对4期SMA）；且 N(CDLCLOSINGMARUBOZU-30) > 0.8698；且 N(CDL2CROWS-130)/N(CDLRISEFALL3METHODS-52) > 0.3917。"
+      },
+      {
+        "label": "预设 Gu 卖出",
+        "detail": "CDLLADDERBOTTOM-10 使用UT（相对4期SMA）；且 N(MAMA-1-40) > 0.7987；且 OBV-30 使用CUT（相对4期SMA）。"
+      },
+      {
+        "label": "预设 Lu 卖出",
+        "detail": "ADD-30 使用CUT（相对4期SMA）；且 AVGPRICE-28 使用DT（相对4期SMA）；且 N(ADD-50) = 0.8467。"
+      },
+      {
+        "label": "预设 La 卖出",
+        "detail": "N(CDLDARKCLOUDCOVER-14)/N(HT_TRENDLINE-14) = 0.3992；且 AD-14 使用COT（相对4期SMA）；且 CDLSTALLEDPATTERN-14 使用OT（相对4期SMA）。"
+      },
+      {
+        "label": "预设 Si 卖出",
+        "detail": "N(T3-14) 交叉 N(AROON-1-14)；且 N(AROONOSC-14) 上穿 N(STOCHRSI-0-14)；且 N(MIDPOINT-14) 下穿 N(SMA-14)。"
+      },
+      {
+        "label": "预设 Pa 卖出",
+        "detail": "N(ULTOSC-15) < N(MACDEXT-0-15)；且 MIDPOINT-12 使用DT（相对4期SMA）；且 PLUS_DI-12 使用COT（相对4期SMA）。"
+      },
+      {
+        "label": "预设 De 卖出",
+        "detail": "N(ROC-15) 上穿 N(MACDFIX-1-15)；且 N(MACD-2-15) < 0.4131；且 N(CCI-60)/N(WMA-15) < 0.8904。"
+      },
+      {
+        "label": "预设 Ra 卖出",
+        "detail": "N(EMA-110) < N(SMA-50)；且 EMA-50 使用COT（相对4期SMA）；且 N(EMA-15)/N(SMA-100) = 0.0614。"
+      },
+      {
+        "label": "预设 Cu 卖出",
+        "detail": "N(SMA-5)/N(SMA-55) = 0.4；且 SMA-50 使用CUT（相对4期SMA）；且 SMA-50 使用DT（相对4期SMA）。"
+      }
+    ],
+    "risk": [
+      "stoploss=-28%；未显式启用追踪止损、leverage或自定义仓位回调，没有can_short。",
+      "名单长度超过买或卖spell列表长度时直接exit()，不会自动补齐。",
+      "原代码历史结果含前视污染，不可据此配置资金；下述优点只指教学结构。"
+    ],
+    "indicators": [
+      {
+        "key": "AD",
+        "usage": "预设La/Pa请求：AD-14、AD-15；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：MFM=((C−L)−(H−C))/(H−L)，AD_t=AD前值+MFM×V；零区间有保护。没有timeperiod参数。"
+      },
+      {
+        "key": "ADD",
+        "usage": "预设Lu请求：ADD-12、ADD-130、ADD-28、ADD-30、ADD-50；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib ADD(x,y)=x+y；abstract按默认映射取两输入（通常high与low）。不是20期求和，timeperiod尾缀不设置周期。"
+      },
+      {
+        "key": "ADXR",
+        "usage": "预设Si请求：ADXR-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：ADXR_n=(当前ADX_n+向前n−1根ADX_n)/2；ADX由方向运动强度作Wilder平滑。"
+      },
+      {
+        "key": "APO",
+        "usage": "预设Pa请求：APO-60；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib默认APO=SMA12(C)−SMA26(C)，matype默认0。fastperiod/slowperiod才设置窗口，通用timeperiod尾缀不替代它们。"
+      },
+      {
+        "key": "AROON",
+        "usage": "预设Pa/Si请求：AROON-0-60、AROON-1-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：Up=100×(n−距最近最高价根数)/n，Down用最低价。输出索引0是Down、1是Up。"
+      },
+      {
+        "key": "AROONOSC",
+        "usage": "预设Si/Zi请求：AROONOSC-14、AROONOSC-15；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：AroonUp−AroonDown；两者来自最近n期高低极值距离，通常范围−100到100。"
+      },
+      {
+        "key": "AVGPRICE",
+        "usage": "预设Lu请求：AVGPRICE-12、AVGPRICE-15、AVGPRICE-28；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：(O+H+L+C)/4，每根单独计算，没有timeperiod参数，尾缀15并非15期均价。"
+      },
+      {
+        "key": "BBANDS",
+        "usage": "预设Pa请求：BBANDS-0-60、BBANDS-2-15；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib close：中轨SMA_n(C)，上/下轨=中轨±2×滚动总体标准差；索引0/1/2为上/中/下，区别于QTPyLib的样本标准差。"
+      },
+      {
+        "key": "BETA",
+        "usage": "预设La请求：BETA-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib对两输入的相邻收益率作回归：x来自第一个输入、y来自第二个输入，β=Cov(x,y)/Var(x)，滚动n期。abstract默认输入high、low，因此分母是high收益率方差，非价格水平回归。"
+      },
+      {
+        "key": "BOP",
+        "usage": "预设Zi请求：BOP-4；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：(C−O)/(H−L)，零区间按库保护。没有timeperiod参数。"
+      },
+      {
+        "key": "CCI",
+        "usage": "预设De请求：CCI-60；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：TP=(H+L+C)/3；m=本窗口TP均值，d=本窗口各TP对同一个m的平均绝对偏差；CCI=(当前TP−m)/(0.015d)。"
+      },
+      {
+        "key": "CDL2CROWS",
+        "usage": "预设Zi请求：CDL2CROWS-130；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib两乌鸦：长阳后上方跳空阴线，再一阴线回到首阳实体内部，输出−100或0。"
+      },
+      {
+        "key": "CDLCLOSINGMARUBOZU",
+        "usage": "预设Zi请求：CDLCLOSINGMARUBOZU-30；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib收盘光头/光脚长实体：阳线收盘接近最高、阴线接近最低，结合历史长实体和影线容差返回方向分数或0。"
+      },
+      {
+        "key": "CDLDARKCLOUDCOVER",
+        "usage": "预设Gu/La请求：CDLDARKCLOUDCOVER-14、CDLDARKCLOUDCOVER-30；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib乌云盖顶：阳线后高开阴线收盘侵入前阳实体，按默认穿透阈值和历史实体尺度判断，返回−100或0。"
+      },
+      {
+        "key": "CDLHARAMICROSS",
+        "usage": "预设Gu请求：CDLHARAMICROSS-50；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib十字孕线：前根较长实体，后根十字星处在前根实体之内；返回方向性离散分数或0。"
+      },
+      {
+        "key": "CDLHIKKAKE",
+        "usage": "预设La请求：CDLHIKKAKE-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib陷阱形态：内包K线后向一侧假突破，之后规定窗口内向反侧确认；输出带方向100/200或0等离散标记。"
+      },
+      {
+        "key": "CDLLADDERBOTTOM",
+        "usage": "预设Gu请求：CDLLADDERBOTTOM-10、CDLLADDERBOTTOM-20、CDLLADDERBOTTOM-50；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib五根梯底：连续下行后出现显示承接的下影结构，最后阳线向上突破，检查多根位置关系后返回看涨分数或0。"
+      },
+      {
+        "key": "CDLMARUBOZU",
+        "usage": "预设Si请求：CDLMARUBOZU-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib光头光脚长实体：实体相对历史较长、上下影很短，返回阳阴方向分数或0。"
+      },
+      {
+        "key": "CDLRISEFALL3METHODS",
+        "usage": "预设Zi请求：CDLRISEFALL3METHODS-52；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib上升/下降三法：趋势长实体，中间三小实体回调大体留在首根范围，末根恢复原趋势并突破；输出方向分数。"
+      },
+      {
+        "key": "CDLSTALLEDPATTERN",
+        "usage": "预设La请求：CDLSTALLEDPATTERN-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib三阳停顿形态：连续上涨后末根实体缩小、位置与前根形成停顿，按内部实体与影线规则返回看跌分数或0。"
+      },
+      {
+        "key": "CMO",
+        "usage": "预设De/Si请求：CMO-12、CMO-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：涨跌幅度分别初始化并做n期Wilder平滑G/D，CMO=100×(G−D)/(G+D)，分母为0返回0。区别于直接滚动涨跌和的原始版本。"
+      },
+      {
+        "key": "CORREL",
+        "usage": "预设Si/Zi请求：CORREL-128、CORREL-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib默认对high/low做n期Pearson相关：r=Σ(x−均值x)(y−均值y)/sqrt[Σ(x−均值x)^2×Σ(y−均值y)^2]。"
+      },
+      {
+        "key": "COS",
+        "usage": "预设Zi请求：COS-50；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib逐元素cos(close)，close当作弧度；没有timeperiod参数，结果对价格单位敏感。"
+      },
+      {
+        "key": "DEMA",
+        "usage": "预设Pa/Zi请求：DEMA-15、DEMA-52；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：DEMA_n=2EMA_n(C)−EMA_n(EMA_n(C))。"
+      },
+      {
+        "key": "EMA",
+        "usage": "预设Ra请求：EMA-110、EMA-12、EMA-15、EMA-5、EMA-50；实际由当前pair的买卖spell选择。",
+        "formula": "EMA_t=α×close_t+(1−α)×EMA_(t−1)，α=2/(n+1)。TA-Lib通常以首n根SMA初始化，Pandas ewm(adjust=False)则从首值递推，热身初期不能视为逐点相同。 此处明确从首个close开始递推，α=2/21。"
+      },
+      {
+        "key": "HT_DCPERIOD",
+        "usage": "预设De请求：HT_DCPERIOD-12；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib利用Hilbert同相/正交分量的相位变化估计主周期长度，并限制变化速度、递推平滑；没有timeperiod参数。"
+      },
+      {
+        "key": "HT_PHASOR",
+        "usage": "预设De/La请求：HT_PHASOR-0-12、HT_PHASOR-1-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib对平滑价格做Hilbert离散滤波，得到同相I与正交Q；索引0为I、1为Q，尾缀不设置周期。"
+      },
+      {
+        "key": "HT_SINE",
+        "usage": "预设Lu请求：HT_SINE-0-28、HT_SINE-0-4、HT_SINE-0-5；实际由当前pair的买卖spell选择。",
+        "formula": "先从价格滤波估计主周期相位φ，再输出sin(φ)与sin(φ+45°)；递推滤波有较长热身。"
+      },
+      {
+        "key": "HT_TRENDLINE",
+        "usage": "预设La请求：HT_TRENDLINE-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib估计主周期长度后对相应窗口价格求均值，再以递推加权方式平滑成瞬时趋势线；没有timeperiod参数。"
+      },
+      {
+        "key": "HT_TRENDMODE",
+        "usage": "预设Zi请求：HT_TRENDMODE-50；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib以Hilbert主周期、相位及瞬时趋势线关系按内部阈值分类，输出0周期/1趋势；多步递推算法，没有timeperiod参数。"
+      },
+      {
+        "key": "LINEARREG",
+        "usage": "预设La请求：LINEARREG-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib对n根close与x=0…n−1最小二乘拟合y=a+bx，输出末点拟合值a+b(n−1)；不是未来预测价。"
+      },
+      {
+        "key": "MA",
+        "usage": "预设Si请求：MA-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib MA_n默认matype0，等于SMA_n(close)。"
+      },
+      {
+        "key": "MACD",
+        "usage": "预设De/Zi请求：MACD-0-50、MACD-1-15、MACD-2-15；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib默认DIF=EMA12(C)−EMA26(C)，signal=EMA9(DIF)，hist=DIF−signal；索引0/1/2对应三列，timeperiod尾缀不替换fast/slow/signal专用参数。"
+      },
+      {
+        "key": "MACDEXT",
+        "usage": "预设De/Pa/Si请求：MACDEXT-0-15、MACDEXT-2-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：两条可选类型MA之差，再平滑作signal，hist=差−signal。默认fast12/slow26/signal9，三种matype都为0即SMA；输出0/1/2为差/信号/柱，timeperiod尾缀不替换专用窗口。"
+      },
+      {
+        "key": "MACDFIX",
+        "usage": "预设De请求：MACDFIX-1-15；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib固定12/26快慢参数的MACD，signalperiod默认9；索引0/1/2为DIF/signal/hist，timeperiod尾缀不设置signalperiod。"
+      },
+      {
+        "key": "MAMA",
+        "usage": "预设Gu/La请求：MAMA-1-14、MAMA-1-40、MAMA-1-50；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib以Hilbert相位变化决定α并约束在slowlimit与fastlimit之间；MAMA=αC+(1−α)MAMA前值，FAMA=(α/2)MAMA+(1−α/2)FAMA前值。默认边界0.05/0.5，100尾缀不设置周期。"
+      },
+      {
+        "key": "MIDPOINT",
+        "usage": "预设Pa/Si请求：MIDPOINT-12、MIDPOINT-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：(最近n根close最高值+最低值)/2；不同于用high/low的MIDPRICE。"
+      },
+      {
+        "key": "MINUS_DI",
+        "usage": "预设Pa/Zi请求：MINUS_DI-12、MINUS_DI-50；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：若下向移动大于上向且为正，记−DM，否则0；−DI=100×Wilder平滑(−DM)/Wilder平滑(TR)。"
+      },
+      {
+        "key": "OBV",
+        "usage": "预设Gu请求：OBV-30、OBV-50；实际由当前pair的买卖spell选择。",
+        "formula": "若C_t>C_(t−1)，OBV_t=OBV_(t−1)+V_t；若下跌减V_t；不变则不变。因此正成交量下单根OBV方向与收盘涨跌方向一致。"
+      },
+      {
+        "key": "PLUS_DI",
+        "usage": "预设Pa请求：PLUS_DI-12；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：若上向移动大于下向且为正，记+DM，否则0；+DI=100×Wilder平滑(+DM)/Wilder平滑(TR)。"
+      },
+      {
+        "key": "ROC",
+        "usage": "预设De请求：ROC-15；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：ROC_n=100×(C_t/C_(t−n)−1)。"
+      },
+      {
+        "key": "SMA",
+        "usage": "预设Cu/Gu/Ra/Si请求：SMA-100、SMA-110、SMA-14、SMA-15、SMA-20、SMA-5、SMA-50、SMA-55、SMA-6；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：SMA_n=最近n根close之和/n，每根等权。"
+      },
+      {
+        "key": "STOCHRSI",
+        "usage": "预设La/Si请求：STOCHRSI-0-14、STOCHRSI-1-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib先算RSI(timeperiod)，再fastK=100×(RSI−最低RSI5)/(最高RSI5−最低RSI5)，fastD默认SMA3(fastK)；索引0/1分别选fastK/fastD。"
+      },
+      {
+        "key": "SUM",
+        "usage": "预设Gu请求：SUM-40；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：最近n根close的滚动和，与ADD两列逐元素相加不同。"
+      },
+      {
+        "key": "T3",
+        "usage": "预设La/Si请求：T3-14；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：GD(x)=(1+v)EMA_n(x)−v EMA_n(EMA_n(x))，T3=GD(GD(GD(C)))，vfactor默认0.7。"
+      },
+      {
+        "key": "TRIMA",
+        "usage": "预设De请求：TRIMA-12；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib三角均线：奇数n为两次(n+1)/2期SMA，偶数n为n/2期SMA后再(n/2+1)期SMA；中部权重大。"
+      },
+      {
+        "key": "ULTOSC",
+        "usage": "预设Pa请求：ULTOSC-15；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：BP=C−min(L,前收)，TR=max(H,前收)−min(L,前收)；UO=100×[4Σ7BP/Σ7TR+2Σ14BP/Σ14TR+Σ28BP/Σ28TR]/7，默认专用窗口7/14/28，timeperiod尾缀不替换。"
+      },
+      {
+        "key": "VAR",
+        "usage": "预设Gu请求：VAR-30；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib总体方差VAR_n=(1/n)Σ(C−均值C)^2，nbdev默认1。"
+      },
+      {
+        "key": "WCLPRICE",
+        "usage": "预设Zi请求：WCLPRICE-52；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：(H+L+2C)/4，每根加权价格，没有timeperiod参数。"
+      },
+      {
+        "key": "WILLR",
+        "usage": "预设Pa请求：WILLR-12；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib %R=−100×(最高H50−C)/(最高H50−最低L50)，之后归一化。"
+      },
+      {
+        "key": "WMA",
+        "usage": "预设De/La请求：WMA-14、WMA-15；实际由当前pair的买卖spell选择。",
+        "formula": "TA-Lib：WMA_n=Σ(i×C_(t−n+i))/Σi，i=1…n，新价格权重大。"
+      },
+      {
+        "key": "NORMALIZE",
+        "usage": "所有动态指标及趋势SMA的全列缩放。",
+        "formula": "N(x_t)=(x_t−min(全列x))/(max(全列x)−min(全列x))。未来新极值会改变旧N(x)，常量列分母为0。修复后需重新优化和独立测试。"
+      }
+    ],
+    "strengths": [
+      "展示不同交易对配置不同规则的组织方法。",
+      "三条件语法和预设表可展开审计，适合学习复杂策略阅读。"
+    ],
+    "weaknesses": [
+      "全列min/max把未来信息传播到历史交叉、比值和阈值。",
+      "规则绑定白名单序号而非交易对名称，增删排序会无意改变映射。",
+      "不同量纲指标独立缩放后相除，经济含义薄弱且容易过拟合。",
+      "随机候选没有固定seed，声明默认和搜索空间难以复现。"
+    ],
+    "suitable": [
+      "静态名单映射、动态参数及前视偏差练习。",
+      "逐前缀重算与完整回测的差异分析。"
+    ],
+    "unsuitable": [
+      "去偏差和重新验证之前直接交易。",
+      "使用会变化排序的动态pairlist。"
+    ],
+    "pitfalls": [
+      "A-n通常表示指标与timeperiod，A-k-n取第k个输出；没有timeperiod的函数不会因尾缀变成n期，CDL尾缀统一改为0。",
+      "三条件AND；>、<、=比较两列（=用np.isclose）；C/CA/CB为任意交叉/上穿/下穿；>R/=R/<R比较常数；/>R等比较比值。",
+      "D仍保留volume>10且仍先计算两列；其他操作会覆盖默认量条件，不能认为所有规则都有volume过滤。",
+      "UT/DT/OT比较指标与其4期SMA；CUT/CDT/COT还检查交叉。生成均线会覆写原始列，可能出现原值与归一化SMA的量纲不一致。",
+      "指标缓存按名称复用且趋势运算覆写原列，调用顺序可能影响计算状态，应核验实际列而不只读指标名。"
+    ],
+    "walkthrough": [
+      {
+        "title": "固定规则归属",
+        "detail": "白名单第一个pair对应buy Zi/sell La；交换前两对，映射跟着位置改变。"
+      },
+      {
+        "title": "展开三条件",
+        "detail": "从预设表写出三个表达式，逐条判断AND与D、交叉、比值的区别。"
+      },
+      {
+        "title": "追加未来K线",
+        "detail": "加入未来新高后重新计算，检查历史归一化值和买卖条件是否被改写。"
+      },
+      {
+        "title": "核对指标接口",
+        "detail": "MACD-0-50选择DIF，但50不替代fastperiod/slowperiod/signalperiod，不能标作MACD50。"
+      }
+    ],
+    "chart": {
+      "kind": "price",
+      "note": "仅演示相关指标机制，非完整策略成交或回测结果。",
+      "focus": "观察追加未来极端K线对历史缩放的影响；动态规则通过文本逐项核对。"
+    },
+    "status": "biased",
+    "sourceNotes": [
+      {
+        "line": 30,
+        "text": "候选映射长度269、搜索候选数1000。"
+      },
+      {
+        "line": 51,
+        "text": "9套预设的具体买卖参数。"
+      },
+      {
+        "line": 331,
+        "text": "全列归一化导致前视。"
+      },
+      {
+        "line": 405,
+        "text": "D保留默认volume>10。"
+      },
+      {
+        "line": 542,
+        "text": "内置buy列表首项Zi。"
+      },
+      {
+        "line": 547,
+        "text": "内置sell列表首项La。"
+      },
+      {
+        "line": 568,
+        "text": "随机生成候选未固定seed。"
+      },
+      {
+        "line": 590,
+        "text": "按白名单位置选择。"
+      },
+      {
+        "line": 595,
+        "text": "映射长度不足时退出进程。"
+      }
+    ],
+    "references": [
+      {
+        "label": "TA-Lib 指标函数与公式",
+        "url": "https://ta-lib.org/functions/"
+      },
+      {
+        "label": "Freqtrade 前视偏差检测",
+        "url": "https://www.freqtrade.io/en/stable/lookahead-analysis/"
+      },
+      {
+        "label": "Freqtrade 参数精度与默认值实现",
+        "url": "https://github.com/freqtrade/freqtrade/blob/develop/freqtrade/strategy/parameters.py"
+      },
+      {
+        "label": "TA-Lib BETA 输入方向及公式",
+        "url": "https://ta-lib.org/functions/beta.html"
+      },
+      {
+        "label": "TA-Lib CMO 使用 Wilder 平滑",
+        "url": "https://ta-lib.org/functions/cmo.html"
+      }
+    ]
+  }
+]

@@ -1,0 +1,2 @@
+# Keep upstream source snapshots byte-for-byte, including original CRLF and spaces.
+sources/strategies/** -text -whitespace

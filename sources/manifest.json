@@ -1,0 +1,6 @@
+{
+  "repository": "https://github.com/freqtrade/freqtrade-strategies",
+  "revision": "f3340ce11f5bdf62f598522e64d1f5638eaa13f5",
+  "original_directory": "user_data/strategies",
+  "license": "GPL-3.0"
+}

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="逐行拆解 Freqtrade Strategy001：EMA、Heikin-Ashi、交易信号与风险控制的交互学习手册。">
+  <title>Strategy001 · 策略研习室</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%234e5bd5'/%3E%3Cpath d='M10 27V16m10 8V8m10 24V19' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css?v=2.1">
+  <script defer src="model.js?v=2.1"></script><script defer src="catalog.js?v=2.1"></script><script defer src="app.js?v=2.1"></script><script defer src="learning-model.js?v=2.1"></script><script defer src="library.js?v=2.1"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">跳到正文</a>
+<aside class="sidebar">
+  <a href="#overview" class="brand"><span class="brand-mark">▥</span><span>策略研习室<small>STRATEGY FIELDNOTES</small></span></a>
+  <div class="library-label">策略库 <span>68 篇已解读</span></div>
+  <label class="sr-only" for="strategy-search">搜索策略名称、指标或内容</label><input id="strategy-search" type="search" placeholder="搜索策略 / 指标…" autocomplete="off"><label class="sr-only" for="strategy-category">策略分组</label><select id="strategy-category"><option value="all">全部策略</option><option value=".">基础与进阶 · 27</option><option value="berlinguyinca">Berlinguyinca · 30</option><option value="futures">合约策略 · 7</option><option value="lookahead_bias">未来数据偏差练习 · 4</option></select><p id="search-result" class="search-result" aria-live="polite"></p><label class="sr-only" for="strategy-select">切换策略</label><select id="strategy-select"><option value="Strategy001">Strategy001 · 已解读</option></select>
+  <button id="open-library" class="text-button library-button">浏览策略目录 ↗</button><div class="current-strategy"><span class="status-dot"></span> 趋势跟随 <span class="mini-tag">5m</span></div>
+  <div class="nav-label">本篇学习导航</div>
+  <nav aria-label="学习章节">
+    <a href="#overview" class="active"><span>01</span> 策略概览</a>
+    <a href="#lab"><span>02</span> K 线实验室</a>
+    <a href="#indicators"><span>03</span> 指标与计算</a>
+    <a href="#signals"><span>04</span> 买入与卖出</a>
+    <a href="#risk"><span>05</span> 止盈与止损</a>
+    <a href="#parameters"><span>06</span> 参数速查</a>
+    <a href="#assessment"><span>07</span> 优缺点与场景</a>
+    <a href="#references"><span>08</span> 源码与参考</a>
+  </nav>
+  <div class="sidebar-bottom"><span class="book-icon">↗</span><strong>从规则，读懂交易。</strong><p>基于仓库源码的交互式学习笔记</p><span>FREQTRADE / INTERFACE V3</span></div>
+</aside>
+<div class="workspace">
+  <header class="topbar"><div><span class="muted">策略库</span><span class="slash">/</span><strong id="breadcrumb">Strategy001</strong></div><div class="top-actions"><span class="draft-label">学习手册 · 完整策略库</span><button class="text-button" id="source-button">〈/〉 查看源码</button></div></header>
+  <main id="main">
+  <article id="strategy-lesson" hidden></article>
+  <article id="lesson">
+  <section id="overview" class="hero">
+    <div class="eyebrow"><span></span> STRATEGY NOTE 001 <b>源码解读</b></div>
+    <h1>看懂均线交叉，<br class="mobile-break">读懂趋势的起点。</h1>
+    <p class="hero-description"><strong>Strategy001</strong> 用三条 EMA 描述趋势，以 Heikin-Ashi 过滤蜡烛方向。<br>从一根 K 线出发，拆解它为什么入场、什么时候离场。</p>
+    <div class="hero-tags"><span>趋势跟随</span><span>仅做多</span><span>EMA × Heikin-Ashi</span><span>作者 Gerald Lonlas</span></div>
+    <div class="metrics"><div><span>决策周期</span><strong>5 <small>分钟</small></strong><p>每根已完成 K 线产生信号</p></div><div><span>趋势指标</span><strong>20 <i>/</i> 50 <i>/</i> 100</strong><p>EMA 周期 · 单位为 K 线根数</p></div><div><span>分段 ROI 目标</span><strong class="green">5% <i>→</i> 1%</strong><p>随交易时长递减的退出门槛</p></div><div><span>固定止损</span><strong class="red">−10%</strong><p>移动止损未开启</p></div></div>
+    <div class="reading-note"><span>i</span><p><strong>先记住一个特殊点：</strong>这份代码的卖出使用 <code>EMA50 上穿 EMA100</code>，同时要求 HA 转阴且低于 EMA20。它不是“金叉买、死叉卖”的对称策略。</p><a href="#signals">查看条件 ↗</a></div>
+  </section>
+
+  <section id="lab" class="section">
+    <div class="section-heading"><div><span class="eyebrow">02 / CHART LAB</span><h2>K 线上的策略，一步一步看。</h2></div><span class="data-badge"><span></span> 合成教学数据 · 非回测</span></div>
+    <p class="section-intro">切换行情，点击或拖动游标。右侧会用这根 K 线的真实计算值，核对每一个信号条件。</p>
+    <div class="lab panel">
+      <div class="lab-toolbar"><div class="segmented" id="scenarios" aria-label="教学场景"><button data-scenario="trend" aria-pressed="true">趋势启动</button><button data-scenario="exit" aria-pressed="false">特殊卖点</button><button data-scenario="chop" aria-pressed="false">震荡假突破</button><button data-scenario="stop" aria-pressed="false">下跌与止损</button></div><label class="toggle-label"><input type="checkbox" id="ha-toggle"> 显示 HA 蜡烛</label></div>
+      <div class="lab-body"><div class="chart-panel"><div class="chart-meta"><strong>DEMO / USDT <span>5m</span></strong><div class="legend"><label><input type="checkbox" data-line="ema20" checked><i class="line20"></i> EMA20</label><label><input type="checkbox" data-line="ema50" checked><i class="line50"></i> EMA50</label><label><input type="checkbox" data-line="ema100" checked><i class="line100"></i> EMA100</label></div></div><div id="ohlc" class="ohlc"></div><div id="chart" aria-label="交互 K 线图"></div><div class="chart-controls"><button id="previous-candle" aria-label="上一根 K 线">←</button><input type="range" min="240" max="379" value="288" id="candle-slider" aria-label="选择 K 线"><button id="next-candle" aria-label="下一根 K 线">→</button><span id="candle-label"></span></div><div class="chart-foot"><span><i class="green-dot"></i> B 买入信号 <i class="red-dot"></i> S 卖出信号</span><span>绿涨 / 红跌 · 标记不代表成交</span></div></div>
+      <aside class="inspector"><div class="inspector-title"><span>信号检查器</span><span id="bar-time"></span></div><div class="segmented small" id="condition-mode"><button data-mode="buy" aria-pressed="true">买入条件</button><button data-mode="sell" aria-pressed="false">卖出条件</button></div><div id="conditions"></div><div id="signal-result" aria-live="polite"></div><button id="jump-signal" class="text-button">定位买入信号 ↗</button><p class="inspector-note">三项必须在同一根 K 线上成立。<br>均线交叉只在发生的那一根成立。</p></aside></div>
+      <div class="scenario-note"><span class="note-number">观察笔记</span><p id="scenario-description"></p></div>
+    </div>
+    <details class="chart-reading"><summary>第一次看 K 线？先认识实体、影线与时间。</summary><p>每根蜡烛代表 5 分钟：O 是开盘价，H 是最高价，L 是最低价，C 是收盘价。实体连接 O 与 C，上下影线延伸到 H 与 L。本图绿涨红跌；这是配色约定。横轴是示例时间，右轴是合成价格（USDT）。B / S 标在产生条件的 K 线上；没有标记的 K 线也可以点击查看。</p></details>
+    <p class="footnote">计算说明：先生成 380 根 OHLC，EMA 使用 SMA 初始化，从第 241 根开始展示；EMA 始终基于原始收盘价，HA 仅改变蜡烛显示。信号在 K 线收盘后确认，实际下单及成交发生在之后，限价单可能不成交。</p>
+  </section>
+
+  <section id="indicators" class="section">
+    <div class="section-heading"><div><span class="eyebrow">03 / THE BUILDING BLOCKS</span><h2>两种指标，各司其职。</h2></div><a class="subtle-link" href="https://ta-lib.org/functions/ema.html" target="_blank" rel="noreferrer">TA-Lib 指标文档 ↗</a></div>
+    <div class="indicator-grid"><div class="panel indicator-card"><div class="card-kicker"><span class="square-icon">∿</span><span>01 / 趋势的速度</span><span class="pill">TA-Lib</span></div><h3>EMA <small>指数移动平均</small></h3><p>越新的收盘价，权重越高。短周期先转向，长周期慢确认；两者的相对位置反映近期价格相对长期均值的变化。</p><div class="formula">α = 2 / (N + 1)<br>EMA<sub>t</sub> = α · Close<sub>t</sub> + (1 − α) · EMA<sub>t−1</sub></div><div class="ema-roles"><div><i class="line20"></i><strong>EMA20</strong><span>α ≈ 9.52%</span><small>100 分钟 · 入场交叉与价格过滤</small></div><div><i class="line50"></i><strong>EMA50</strong><span>α ≈ 3.92%</span><small>250 分钟 · 连接两组交叉条件</small></div><div><i class="line100"></i><strong>EMA100</strong><span>α ≈ 1.98%</span><small>500 分钟 · 仅参与卖出交叉</small></div></div><details><summary>初始化与手算示例</summary><p>TA-Lib 默认兼容模式以最初 N 个收盘价的简单平均值作为首个 EMA；此前数值不可用。假设上一根 EMA20 = 100，本根收盘 = 102，则新 EMA20 = 100 + (102 − 100) × 2/21 ≈ 100.1905。</p><p>100 / 250 / 500 分钟是 N 根 K 线对应的名义跨度；EMA 是递推值，更早的数据仍有衰减权重，并非只看最近 N 根。</p></details></div>
+    <div class="panel indicator-card"><div class="card-kicker"><span class="square-icon mint">▥</span><span>02 / 蜡烛的方向</span><span class="pill">QTPyLib</span></div><h3>Heikin-Ashi <small>平均 K 线</small></h3><p>把原始 OHLC 平滑为新的蜡烛，减少短期颜色变化。这里用 HA 收盘价的位置和阴阳线方向，确认均线信号。</p><div class="formula">HA Close<sub>t</sub> = (O<sub>t</sub> + H<sub>t</sub> + L<sub>t</sub> + C<sub>t</sub>) / 4<br>HA Open<sub>t</sub> = (HA Open<sub>t−1</sub> + HA Close<sub>t−1</sub>) / 2</div><div class="ha-directions"><div><span class="candle-symbol up"></span><strong>阳线</strong><code>HA Close &gt; HA Open</code><small>买入过滤条件</small></div><div><span class="candle-symbol down"></span><strong>阴线</strong><code>HA Close &lt; HA Open</code><small>卖出过滤条件</small></div></div><details><summary>第一根如何计算？它是真实价格吗？</summary><p>第一根 HA Open = (原始 Open + Close) / 2。HA High 取原始 High、HA Open、HA Close 的最大值；HA Low 取对应最小值。策略只读取 HA Open / Close，图表额外计算高低点以绘图。</p><p>例如 O=100、H=104、L=98、C=102，则 HA Close=101；若前一根 HA Open=99、HA Close=100，则本根 HA Open=99.5，为阳线。HA 价格是合成值，不是可直接成交的报价。两者相等时既不满足阳线也不满足阴线条件。</p></details></div></div>
+    <div class="inline-note">指标归类：此策略的 <code>ta.EMA</code> 属于 TA-Lib 的 <strong>Overlap Studies（重叠研究）</strong>，不是 Math Transform。<code>heikinashi</code> 和 <code>crossed_above</code> 在这份源码中来自 QTPyLib。</div>
+  </section>
+
+  <section id="signals" class="section"><div class="section-heading"><div><span class="eyebrow">04 / ENTRY & EXIT</span><h2>入场和离场，并不对称。</h2></div></div>
+    <div class="signal-grid"><div class="panel rule-card"><div class="rule-title"><span class="signal-icon buy">↗</span><div><h3>买入 · enter_long</h3><span>三项条件同时满足</span></div></div><ol><li><strong>EMA20 刚刚上穿 EMA50</strong><p>上一根 EMA20 ≤ EMA50，当前 EMA20 &gt; EMA50。</p></li><li><strong>HA 收盘价高于 EMA20</strong><p>价格确认短期走强；这里比较的是 HA Close，不是原始 Close。</p></li><li><strong>HA 是阳线</strong><p>HA Open &lt; HA Close，平滑蜡烛方向向上。</p></li></ol><pre><code>crossed_above(ema20, ema50)
+&amp; (ha_close &gt; ema20)
+&amp; (ha_open &lt; ha_close)</code></pre><p class="rule-footer">EMA100 没有参与买入；不要求价格站上 EMA100，也没有成交量过滤。</p></div>
+    <div class="panel rule-card"><div class="rule-title"><span class="signal-icon sell">↘</span><div><h3>卖出 · exit_long</h3><span>信号成立后，仍需通过盈利门槛</span></div></div><ol><li><strong>EMA50 刚刚上穿 EMA100</strong><p>注意仍然是上穿。它可能发生在慢均线迟到的确认阶段。</p></li><li><strong>HA 收盘价低于 EMA20</strong><p>中期趋势转强的同时，短期价格已经回落。</p></li><li><strong>HA 是阴线</strong><p>HA Open &gt; HA Close，平滑蜡烛转弱。</p></li></ol><pre><code>crossed_above(ema50, ema100)
+&amp; (ha_close &lt; ema20)
+&amp; (ha_open &gt; ha_close)</code></pre><p class="rule-footer">三个条件只在特定路径重合，不能把它视为通用的趋势转弱退出。</p></div></div>
+    <div class="callout"><strong>有卖出信号 ≠ 一定卖出</strong><p><code>use_exit_signal=True</code> 启用信号退出；<code>exit_profit_only=True</code> 要求当前收益高于 <code>exit_profit_offset</code>（本策略未设置，框架默认 0）。亏损时该信号不会执行，但固定止损仍然有效。若信号只出现一根，之后盈利时不会自动补执行过去的信号。<a href="https://www.freqtrade.io/en/stable/configuration/#parameters-table" target="_blank" rel="noreferrer">框架语义 ↗</a></p></div>
+    <p class="footnote">解读推断：卖出规则可理解为“慢趋势确认时，短期已回落”的退出尝试；作者没有给出设计动机，不能断言它是笔误。若同一根同时出现进出场信号，Freqtrade 的信号冲突规则还会影响执行。</p>
+  </section>
+
+  <section id="risk" class="section"><div class="section-heading"><div><span class="eyebrow">05 / RISK & REWARD</span><h2>离场还有两条独立的路。</h2></div><span class="pill">按源码默认值讲解</span></div>
+    <div class="risk-grid"><div class="panel roi-card"><h3>随时间降低的 ROI 门槛</h3><p>不是分批卖出，而是每一时段对应一个收益目标。</p><div class="roi-stair"><div data-roi="0"><strong>5%</strong><span>0–19 分钟</span></div><div data-roi="20"><strong>4%</strong><span>20–29 分钟</span></div><div data-roi="30"><strong>3%</strong><span>30–59 分钟</span></div><div data-roi="60"><strong>1%</strong><span>60 分钟起</span></div></div><label for="minutes">交易时长 <output id="minutes-output">35 分钟</output></label><input id="minutes" type="range" min="0" max="120" value="35"><div class="roi-result" id="roi-result"></div><p class="footnote">这里的时长以 <code>trade.open_date</code> 为起点（首次下单时），不是 K 线数量。ROI 按框架收益口径包含费用；60 分钟后仍需达标，绝不代表到时强制平仓。<a href="https://www.freqtrade.io/en/stable/strategy-customization/#minimal-roi" target="_blank" rel="noreferrer">官方说明 ↗</a> · 退出小实验按当前框架的严格比较 <code>profit &gt; ROI</code> 判断，恰好等于目标时不触发。<a href="https://github.com/freqtrade/freqtrade/blob/stable/freqtrade/strategy/interface.py" target="_blank" rel="noreferrer">实现源码 ↗</a></p></div>
+    <div class="panel stop-card"><h3>固定止损 <span class="red">−10%</span></h3><div class="price-example"><div><span>假设买入价</span><strong>100</strong></div><span>→</span><div><span>简化止损价</span><strong class="red">90</strong></div></div><p>以无杠杆、忽略费用的价格示例理解：价格跌到买入价的 90% 附近触发止损。市价退出仍可能有滑点，−10% 不是最终损失的保证上限。</p><div class="divider"></div><h4>移动止损：关闭</h4><p><code>trailing_stop=False</code>。虽然代码保留了 1% 的回撤参数和 2% 的偏移参数，它们当前不生效，盈利后止损线不会随最高价上移。</p><p class="footnote">止损在机器人端检查（<code>stoploss_on_exchange=False</code>），依赖运行与连接状态。<a href="https://www.freqtrade.io/en/stable/stoploss/" target="_blank" rel="noreferrer">止损机制 ↗</a></p></div></div>
+    <div class="exit-explorer panel"><div><span class="eyebrow">TRY IT / 退出判断小实验</span><h3>现在，这笔仓位能离场吗？</h3><p>沿用上方交易时长；假设已经持仓、没有入场冲突。列出可能的退出通道，不模拟同根触发优先级。</p></div><div class="exit-inputs"><label for="profit">当前净收益 <output id="profit-output">+2.0%</output></label><input id="profit" type="range" min="-12" max="8" value="2" step="0.1"><label><input type="checkbox" id="exit-signal"> 当前存在 exit_long 信号</label><div id="exit-verdict" aria-live="polite"></div></div></div>
+  </section>
+
+  <section id="parameters" class="section"><div class="section-heading"><div><span class="eyebrow">06 / PARAMETER REFERENCE</span><h2>把代码里的数字，翻译成人话。</h2></div></div><p class="section-intro">以下为 Strategy001.py 中的设置。运行时配置可以覆盖相关策略属性；EMA 的 20 / 50 / 100 则直接写在指标函数中。</p><div class="panel table-wrap"><table><thead><tr><th>参数 / 属性</th><th>源码值</th><th>含义与影响</th></tr></thead><tbody>
+    <tr><td>INTERFACE_VERSION</td><td>3</td><td>采用 enter_long / exit_long 的策略接口。</td></tr>
+    <tr><td>timeframe</td><td>'5m'</td><td>每根 K 线 5 分钟；改变周期也会改变均线对应的时间跨度。</td></tr>
+    <tr><td>EMA timeperiod</td><td>20 / 50 / 100</td><td>取原始 close 计算；参数硬编码，没有声明可供 Hyperopt 搜索的参数。</td></tr>
+    <tr><td>minimal_roi</td><td>{0: .05, 20: .04,<br>30: .03, 60: .01}</td><td>键实际为字符串，单位分钟；按经过时间选用对应收益门槛。</td></tr>
+    <tr><td>stoploss</td><td>−0.10</td><td>固定止损设置，与是否允许亏损时按信号退出相互独立。</td></tr>
+    <tr><td>trailing_stop</td><td>False</td><td>关闭移动止损。</td></tr>
+    <tr><td>trailing_stop_positive<br>trailing_stop_positive_offset</td><td>0.01 / 0.02</td><td><span class="muted">当前不生效</span> · 开启移动止损后需结合其他 trailing 配置重新理解。</td></tr>
+    <tr><td>process_only_new_candles</td><td>True</td><td>只在新 K 线时重新分析指标；不表示止损只能每 5 分钟检查一次。</td></tr>
+    <tr><td>use_exit_signal</td><td>True</td><td>使用策略的 exit_long 信号作为退出路径之一。</td></tr>
+    <tr><td>exit_profit_only</td><td>True</td><td>信号退出受到盈利门槛限制；并非“绝不亏损卖出”。</td></tr>
+    <tr><td>ignore_roi_if_entry_signal</td><td>False</td><td>入场信号存在时，不因此忽略 ROI 达标退出。</td></tr>
+    <tr><td>order_types</td><td>entry / exit: limit<br>stoploss: market</td><td>普通进出场用限价单，触发信号并不保证成交；止损用市价单。</td></tr>
+    <tr><td>stoploss_on_exchange</td><td>False</td><td>不预挂交易所止损，由机器人监控并触发。</td></tr>
+    <tr><td>informative_pairs()</td><td>[]</td><td>没有额外交易对或更高周期数据作为趋势过滤。</td></tr>
+    <tr><td>startup_candle_count</td><td>未显式设置</td><td>EMA100 至少需要 100 个样本产生首值；稳定性可能需要更长历史，应做递归分析。</td></tr>
+    </tbody></table></div></section>
+
+  <section id="assessment" class="section"><div class="section-heading"><div><span class="eyebrow">07 / FIELD ASSESSMENT</span><h2>什么环境下，它更值得研究？</h2></div><span class="pill">基于规则的推断 · 非收益结论</span></div>
+    <div class="assessment-grid"><div class="panel assessment-card"><span class="assessment-icon green">↗</span><h3>优势与适应场景</h3><ul><li><strong>规则少，解释成本低。</strong>三条均线和 HA，适合学习交叉事件与过滤条件的组合。</li><li><strong>有持续性的上行启动。</strong>短均线先转强，HA 阳线提供额外方向确认；平滑上涨有利于信号延续后的价格推进。</li><li><strong>退出路径明确。</strong>信号、时间分段 ROI 和固定止损各自定义了可研究的行为。</li><li><strong>成交连续、点差较小的行情。</strong>更便于评估 5 分钟规则本身，而不让执行成本完全主导结果。</li></ul></div><div class="panel assessment-card"><span class="assessment-icon red">↙</span><h3>局限与不利场景</h3><ul><li><strong>横盘里反复追涨。</strong>均线缠绕带来假交叉；HA 过滤不能消除噪声，也会增加滞后。</li><li><strong>下跌中的反弹也可能入场。</strong>买入没有 EMA100 方向限制，更没有高周期趋势过滤。</li><li><strong>卖出信号可能稀少。</strong>慢均线上穿与短期转弱必须同根重合，且亏损时还会被盈利限制拦住。</li><li><strong>盈亏幅度不对称。</strong>末段目标只有 1%，固定止损为 10%；连续小赢可能被一次较大亏损抵消。</li></ul></div></div>
+    <div class="review-panel"><div><span class="eyebrow">NEXT QUESTIONS</span><h3>后续可以怎样验证？</h3></div><ol><li><strong>先统计退出原因</strong><span>回测里有多少交易由 ROI、exit_signal 和 stop_loss 退出？特殊卖点是否真正起作用？</span></li><li><strong>分行情看结果</strong><span>分别测试上涨、横盘、下跌样本；加入手续费、滑点及限价未成交影响。</span></li><li><strong>每次只改一处</strong><span>可对照测试长周期趋势过滤、波动率止损或不同卖出规则，再做样本外验证。这些是研究方向，尚未写入策略。</span></li></ol></div>
+    <p class="footnote">没有提供历史回测，所以这里不报告胜率、收益率或“最优”参数。研究时也应检查预热、递归偏差和未来数据引用。</p>
+  </section>
+
+  <section id="references" class="section references"><div><span class="eyebrow">08 / GO TO THE SOURCE</span><h2>对照源码，继续探索。</h2><p>本页基于当前仓库 Strategy001.py，规则与分析分别标注。教学图由前端按公式计算，不连接交易所。</p></div><div class="reference-links"><button id="source-bottom">〈/〉 本地策略完整源码 <span>↗</span></button><a href="https://ta-lib.org/functions/ema.html" target="_blank" rel="noreferrer">TA-Lib · EMA 公式与实现 <span>↗</span></a><a href="https://ta-lib.org/functions/#math-transform" target="_blank" rel="noreferrer">TA-Lib · 全部指标分类 <span>↗</span></a><a href="https://github.com/freqtrade/technical/blob/main/technical/vendor/qtpylib/indicators.py" target="_blank" rel="noreferrer">QTPyLib · HA 与交叉函数实现 <span>↗</span></a><a href="https://www.freqtrade.io/en/stable/strategy-customization/" target="_blank" rel="noreferrer">Freqtrade · 策略与执行机制 <span>↗</span></a></div></section>
+  <footer><span>策略研习室 <b>/</b> Strategy001</span><span>读懂规则，再验证假设。 <span class="muted">仅供学习，不构成投资建议。</span></span></footer>
+  </article>
+  </main>
+</div>
+<dialog id="library-dialog"><div class="dialog-header"><div><strong>全部策略 · 68 篇源码解读</strong><small>按目录浏览，阅读提醒与代码事实分别标注</small></div><button id="close-library" aria-label="关闭策略目录">×</button></div><div id="library-grid"></div></dialog>
+<dialog id="source-dialog"><div class="dialog-header"><div><strong>Strategy001.py</strong><small>sources/strategies · 本页构建时源码快照</small></div><button id="close-source" aria-label="关闭源码">×</button></div><pre><code id="source-code"></code></pre></dialog>
+</body>
+</html>
