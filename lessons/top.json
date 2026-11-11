@@ -1726,8 +1726,112 @@
       },
       {
         "key": "STOCH",
-        "usage": "默认5/3/3；只使用SlowK。",
-        "formula": "RawK=100×(C−LL₅)/(HH₅−LL₅)；默认SlowK=SMA₃(RawK)，SlowD=SMA₃(SlowK)。"
+        "usage": "先看收盘价在最近高低区间中的位置，再做平滑。默认 5 / 3 / 3；本策略只使用 SlowK < 20 过滤买入。",
+        "formula": "RawK=100×(C−LL₅)/(HH₅−LL₅)；默认SlowK=SMA₃(RawK)，SlowD=SMA₃(SlowK)。",
+        "name": "Stochastic（STOCH）",
+        "guide": {
+          "title": "看懂 STOCH：从价格位置开始",
+          "sections": [
+            {
+              "title": "01 · 先不看公式：收盘价在区间的什么位置？",
+              "paragraphs": [
+                "把最近 5 根 K 线的最高价和最低价看成一把尺子的两端。STOCH 先问：当前收盘价距离尺子底端有多远，占整把尺子的多少？这个位置分数就是 RawK，也叫 Fast %K。",
+                "例如区间是 90～110：收盘在 90，位置分数为 0；在 100，为 50；在 110，为 100。它衡量相对位置，不是涨跌幅、上涨概率或胜率。“随机指标”这个名字也不表示结果是随机生成的。"
+              ]
+            },
+            {
+              "title": "02 · 先把公式里的字母翻译成人话",
+              "terms": [
+                {
+                  "term": "C / Close",
+                  "meaning": "当前这一根 K 线的收盘价，不是最近 5 根收盘价的平均值。"
+                },
+                {
+                  "term": "LL₅ / Lowest Low",
+                  "meaning": "最近 5 根 K 线（包含当前根）所有 Low 中的最小值。LL 是最低的低价，₅ 表示看 5 根。"
+                },
+                {
+                  "term": "HH₅ / Highest High",
+                  "meaning": "同一组 5 根 K 线所有 High 中的最大值。不是只比较收盘价，也不是历史全部最高价。"
+                },
+                {
+                  "term": "SMA₃(X)",
+                  "meaning": "把 X 最近 3 个有效数值相加，再除以 3。SMA 是简单移动平均，每个值的权重相同。"
+                },
+                {
+                  "term": "t、t−1、t−2",
+                  "meaning": "分别是当前根、前一根、前两根。例如 Kₜ₋₁ 就是上一根的 K 值。"
+                },
+                {
+                  "term": "RawK → SlowK → SlowD",
+                  "meaning": "先算未经平均的位置分数，再平均一次得到慢 K，再平均一次得到慢 D。图表中的 %K / %D 必须结合快、慢版本判断。"
+                }
+              ]
+            },
+            {
+              "title": "03 · 逐步代入：为什么收盘 93 会得到 15？",
+              "paragraphs": [
+                "假设最近 5 根最高价 HH₅ = 110、最低价 LL₅ = 90，当前收盘 C = 93。价格单位任意，以下都是教学数字。",
+                "第一步：93 − 90 = 3。收盘价距离区间底端有 3 个价格单位。",
+                "第二步：110 − 90 = 20。整个区间宽度是 20 个价格单位。",
+                "第三步：3 ÷ 20 = 0.15，再乘 100 得到 15。收盘价在从低到高 15% 的位置。这里得到的是 RawK = 15，还不是策略直接使用的 SlowK。"
+              ],
+              "formula": "RawK = 100 × (C − LL₅) ÷ (HH₅ − LL₅)\n     = 100 × (93 − 90) ÷ (110 − 90)\n     = 100 × 3 ÷ 20 = 15"
+            },
+            {
+              "title": "04 · 5 / 3 / 3：看 5 根，再平均两次",
+              "paragraphs": [
+                "第一个 5：每根都回看最近 5 根的高低范围，算一个新的 RawK。Strategy002 是 5 分钟周期，因此这个窗口对应 5 根、合计 25 分钟；不是 5 天。下一根到来时，窗口向后移动，最旧的一根退出。",
+                "第一个 3：把最近 3 个 RawK 平均，得到 SlowK。第二个 3：再把最近 3 个 SlowK 平均，得到 SlowD。TA-Lib STOCH 的默认两次平滑都采用 SMA（均线类型 0）。其他软件常见 14 / 3 / 3，不能把它直接当成这里的默认值。",
+                "用一段已预热的 RawK 序列手算：35 → 30 → 10 → 20 → 15。前一个三值窗口 (35 + 30 + 10) / 3 = 25；下一窗口 (30 + 10 + 20) / 3 = 20；最新窗口 (10 + 20 + 15) / 3 = 15。所以最近三个 SlowK 为 25 → 20 → 15，当前 SlowD = (25 + 20 + 15) / 3 = 20。",
+                "两次平均能减轻单根的跳动，但也会增加滞后。当前收盘已经回升，SlowK 仍可能偏低；不能把平滑后的 SlowK 数字直接当成当前收盘在区间中的精确百分比。"
+              ],
+              "formula": "SlowKₜ = (RawKₜ₋₂ + RawKₜ₋₁ + RawKₜ) ÷ 3\nSlowDₜ = (SlowKₜ₋₂ + SlowKₜ₋₁ + SlowKₜ) ÷ 3",
+              "demo": "stoch-position"
+            },
+            {
+              "title": "05 · 小于 20，为什么叫“超卖”？",
+              "paragraphs": [
+                "通常把 0～20 附近称为超卖区，80～100 附近称为超买区。对未经平滑的 RawK 来说，低值直接表示收盘靠近近期区间下端；对 SlowK 来说，低值表示最近几次位置分数的平均偏低。",
+                "“超卖”不是“跌够了，一定会涨”。单边下跌时，价格可以不断创新低，而收盘持续靠近每个新窗口的低端，指标就可能长时间低于 20。这常被称为指标钝化；低位持续本身不能证明已经见底。",
+                "同样，超过 80 不代表马上下跌。在持续上涨中，高读数可能维持很久。这些分区是读图参考，不是独立的买卖命令。"
+              ]
+            },
+            {
+              "title": "06 · Strategy002 到底拿它做什么？",
+              "paragraphs": [
+                "源码调用 ta.STOCH(dataframe)，仅把返回结果的 slowk 保存下来。入场条件是 slowk < 20，并且同一根 K 线还要同时满足 RSI < 30、原始收盘价低于布林下轨、CDLHAMMER == 100。四项是 AND：缺一项都不产生这个买入信号。",
+                "这里是“小于 20”的状态判断，不要求从上方跌破 20，也不要求从下方重新上穿 20。SlowK 恰好等于 20 时不通过。它也没有使用 SlowD，更没有要求 K 线上穿 D 线。",
+                "卖出信号使用 SAR > 原始收盘价，并且 fisher_rsi > 0.3；普通信号退出还受盈利限制。STOCH 超过 80 或 K/D 死叉都不是这份源码的卖出条件。"
+              ],
+              "formula": "入场中的一项过滤：slowk < 20\n不是：RawK < 20\n也不是：SlowK 上穿 SlowD"
+            },
+            {
+              "title": "07 · 还有几个容易混淆的地方",
+              "bullets": [
+                "STOCH、STOCHF 与 STOCHRSI 不同：STOCH 返回慢 K、慢 D；STOCHF 返回快 K、快 D；STOCHRSI 先算 RSI，再看 RSI 在自身区间的位置。不要因为名字相似就替换输入或公式。",
+                "STOCH 也不等于所有软件里的 KDJ。部分 KDJ 使用不同的递推平滑，还多一条 J 线；不能假定数值一致。",
+                "区间最高价等于最低价时，分母为 0，不能直接手算除法。TA-Lib 会对退化区间作保护；零读数不能机械解释成强烈超卖。",
+                "历史数据不足时，先等待窗口和均线预热，不要把缺失值当作 0。理论上第 5 根可算首个 RawK，第 7 根可算首个 SlowK，第 9 根可算首个 SlowD；TA-Lib STOCH 的成对输出按完整预热对齐。",
+                "当前 K 线未结束时，最高价、最低价和收盘价还会变，STOCH 也会跟着变。此策略按已完成 K 线的条件来理解。"
+              ]
+            }
+          ],
+          "references": [
+            {
+              "label": "TA-Lib：快慢 K / D 的公式与区别",
+              "url": "https://ta-lib.github.io/ta-doc/indicator/STOCH.htm"
+            },
+            {
+              "label": "TA-Lib 源码：默认参数与计算",
+              "url": "https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_STOCH.c"
+            },
+            {
+              "label": "StockCharts：超买超卖的含义与局限",
+              "url": "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/stochastic-oscillator-fast-slow-and-full"
+            }
+          ]
+        }
       },
       {
         "key": "BBANDS",

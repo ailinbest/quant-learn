@@ -921,6 +921,32 @@ details p {
 .ha-reading-list {margin:10px 0 0;padding-left:18px;color:var(--ink-secondary, #6f7c91);font-size:12px;line-height:1.95;}
 .ha-reading-list li+li {margin-top:9px;}
 .ha-guide-practice {margin-top:22px;padding:14px;border-radius:6px;background:var(--inset-bg, #f6f7fb);font-size:12px;}
+.indicator-guide>summary {color:var(--blue);}
+.guide-action {display:inline-block;margin-left:8px;font-size:11px;white-space:nowrap;}
+.indicator-guide .guide-collapse,.indicator-guide[open] .guide-expand {display:none;}
+.indicator-guide[open] .guide-collapse {display:inline;}
+.indicator-guide-body {min-width:0;overflow-wrap:anywhere;}
+.indicator-guide-section {margin-top:22px;}
+.indicator-guide-section h4 {font-size:13px;color:var(--text);line-height:1.7;}
+.indicator-guide-body p,.indicator-guide-body .reading-list {font-size:12px;}
+.guide-terms {margin:12px 0 0;font-size:12px;line-height:1.9;}
+.guide-terms>div+div {margin-top:13px;}
+.guide-terms dt {font-weight:600;color:var(--text);}
+.guide-terms dd {margin:3px 0 0;color:var(--ink-secondary, #6f7c91);}
+.guide-references {display:grid;gap:9px;margin-top:22px;font-size:11px;}
+.stoch-demo {margin-top:20px;padding:16px;border:1px solid var(--border);border-radius:7px;background:var(--inset-bg, #f6f7fb);}
+.stoch-demo label {display:block;margin-top:15px;font-size:12px;}
+.stoch-demo output {font-family:var(--mono);color:var(--blue);}
+.stoch-demo input {display:block;width:100%;margin:12px 0;accent-color:var(--blue);}
+.stoch-range {position:relative;height:14px;margin-top:22px;background:var(--paper);border:1px solid var(--border);border-radius:3px;}
+.stoch-range>span {position:absolute;top:-5px;bottom:-5px;width:3px;transform:translateX(-50%);background:var(--blue);}
+.stoch-range-labels {display:flex;justify-content:space-between;gap:12px;margin-top:7px;font-size:10px;color:var(--muted);}
+.stoch-results {margin-top:18px;font-size:12px;font-variant-numeric:tabular-nums;}
+.stoch-results>div {margin-top:12px;}
+.stoch-results strong {display:block;color:var(--text);font-weight:600;}
+.stoch-results span {display:block;color:var(--ink-secondary, #6f7c91);}
+.stoch-results .stoch-filter {padding-top:12px;border-top:1px solid var(--border);}
+.stoch-results .stoch-filter.passes {color:var(--green);}
 .ha-directions {
   display:grid;
   grid-template-columns:1fr 1fr;
