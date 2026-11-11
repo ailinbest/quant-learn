@@ -1,0 +1,630 @@
+{
+  "checkedAt": "2026-11-12",
+  "indicators": {
+    "AC_KAPPA": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "κ 是此执行策略自定义的冲击与风险参数，不是普通图表指标。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "AD": {
+      "kind": "indicator",
+      "label": "腾落指标（ADL）",
+      "url": "https://cn.tradingview.com/support/solutions/43000501770/"
+    },
+    "ADD": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "ADD 是两列逐元素相加，不是周期指标。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "ADX": {
+      "kind": "indicator",
+      "label": "平均趋向指数(ADX)",
+      "url": "https://cn.tradingview.com/support/solutions/43000589099/"
+    },
+    "ADXR": {
+      "kind": "related",
+      "label": "平均趋向指数(ADX)（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000589099/",
+      "note": "ADXR 在 ADX 的基础上对当前值与历史值再取平均；文章解释基础 ADX，并非 ADXR 的完整算法。"
+    },
+    "AO": {
+      "kind": "indicator",
+      "label": "动量震荡指标(AO)",
+      "url": "https://cn.tradingview.com/support/solutions/43000501826/"
+    },
+    "APO": {
+      "kind": "related",
+      "label": "移动平均收敛/发散指标（MACD）（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000502344/",
+      "note": "APO 与 MACD 都涉及快慢均线差。本策略的 TA-Lib APO 默认使用 SMA，没有 MACD 信号线；文章用于理解均线差，不代表相同默认实现。"
+    },
+    "AROON": {
+      "kind": "indicator",
+      "label": "阿隆指标",
+      "url": "https://cn.tradingview.com/support/solutions/43000501801/"
+    },
+    "AROONOSC": {
+      "kind": "indicator",
+      "label": "Aroon震荡指标",
+      "url": "https://cn.tradingview.com/support/solutions/43000773004/"
+    },
+    "ASIN": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "ASIN 是反正弦数学函数，不是独立交易指标。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "ATR": {
+      "kind": "indicator",
+      "label": "真实波幅均值(ATR)",
+      "url": "https://cn.tradingview.com/support/solutions/43000501823/"
+    },
+    "AVGPRICE": {
+      "kind": "related",
+      "label": "图表类型与 OHLC（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000703407/",
+      "note": "AVGPRICE=(O+H+L+C)/4 是单根 OHLC 均价，不是 HA 的完整蜡烛变换。文章用于认识原始 K 线数据，具体运算以本页为准。"
+    },
+    "BBANDS": {
+      "kind": "indicator",
+      "label": "布林带(BB)",
+      "url": "https://cn.tradingview.com/support/solutions/43000501840/",
+      "note": "阅读原理时请对照本卡片：各策略的价格输入、窗口、标准差倍数及样本/总体标准差口径可能不同。"
+    },
+    "BETA": {
+      "kind": "related",
+      "label": "Beta（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000703603/",
+      "note": "文章讨论资产相对市场基准的 Beta；这里 TA-Lib 默认对 high/low 的相邻收益率计算，不能直接解释为相对大盘的风险。"
+    },
+    "BOP": {
+      "kind": "indicator",
+      "label": "均势指标 (BOP)",
+      "url": "https://cn.tradingview.com/support/solutions/43000589100/"
+    },
+    "CANDLE_PATTERN": {
+      "kind": "related",
+      "label": "自动K线形态检测（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000584462/",
+      "note": "未找到高浪线 CDLHIGHWAVE 及批量形态的专门中文帮助条目。此文介绍自动 K 线形态检测；具体形态与 TA-Lib 检测条件仍以本页源码说明为准。"
+    },
+    "CCI": {
+      "kind": "indicator",
+      "label": "顺势指标（CCI）",
+      "url": "https://cn.tradingview.com/support/solutions/43000502001/"
+    },
+    "CDL2CROWS": {
+      "kind": "related",
+      "label": "自动K线形态检测（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000584462/",
+      "note": "未找到两乌鸦的专门中文帮助条目。此文介绍自动 K 线形态检测；具体形态与 TA-Lib 检测条件仍以本页源码说明为准。"
+    },
+    "CDLCLOSINGMARUBOZU": {
+      "kind": "related",
+      "label": "黑色光头光脚 - 看跌（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000583785/",
+      "note": "相关的光头光脚形态。TA-Lib Closing Marubozu 只要求收盘端的影线很短，不等同于两端都无影线的完整 Marubozu。",
+      "additionalLinks": [
+        {
+          "label": "白色光头光脚 - 看涨",
+          "url": "https://cn.tradingview.com/support/solutions/43000583786/"
+        }
+      ]
+    },
+    "CDLDARKCLOUDCOVER": {
+      "kind": "indicator",
+      "label": "乌云盖顶 - 看跌",
+      "url": "https://cn.tradingview.com/support/solutions/43000592563/",
+      "note": "用于认识形态；TradingView 的趋势筛选与 TA-Lib 的历史阈值、位置条件和返回值不保证一致。"
+    },
+    "CDLEVENINGSTAR": {
+      "kind": "indicator",
+      "label": "暮星 - 看跌",
+      "url": "https://cn.tradingview.com/support/solutions/43000583772/",
+      "note": "用于认识形态；TradingView 的趋势筛选与 TA-Lib 的历史阈值、位置条件和返回值不保证一致。"
+    },
+    "CDLHAMMER": {
+      "kind": "indicator",
+      "label": "锤形线 - 看涨",
+      "url": "https://cn.tradingview.com/support/solutions/43000583775/",
+      "note": "用于认识形态；TradingView 的趋势筛选与 TA-Lib 的历史阈值、位置条件和返回值不保证一致。"
+    },
+    "CDLHANGINGMAN": {
+      "kind": "indicator",
+      "label": "上吊线 - 看跌",
+      "url": "https://cn.tradingview.com/support/solutions/43000583776/",
+      "note": "用于认识形态；TradingView 的趋势筛选与 TA-Lib 的历史阈值、位置条件和返回值不保证一致。"
+    },
+    "CDLHARAMICROSS": {
+      "kind": "indicator",
+      "label": "十字孕线 - 看跌",
+      "url": "https://cn.tradingview.com/support/solutions/43000592707/",
+      "note": "用于认识形态；TradingView 的趋势筛选与 TA-Lib 的历史阈值、位置条件和返回值不保证一致。",
+      "additionalLinks": [
+        {
+          "label": "十字孕线 - 看涨",
+          "url": "https://cn.tradingview.com/support/solutions/43000592708/"
+        }
+      ]
+    },
+    "CDLHIKKAKE": {
+      "kind": "related",
+      "label": "自动K线形态检测（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000584462/",
+      "note": "未找到陷阱形态 Hikkake的专门中文帮助条目。此文介绍自动 K 线形态检测；具体形态与 TA-Lib 检测条件仍以本页源码说明为准。"
+    },
+    "CDLLADDERBOTTOM": {
+      "kind": "related",
+      "label": "自动K线形态检测（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000584462/",
+      "note": "未找到梯底的专门中文帮助条目。此文介绍自动 K 线形态检测；具体形态与 TA-Lib 检测条件仍以本页源码说明为准。"
+    },
+    "CDLMARUBOZU": {
+      "kind": "indicator",
+      "label": "黑色光头光脚 - 看跌",
+      "url": "https://cn.tradingview.com/support/solutions/43000583785/",
+      "note": "用于认识形态；TradingView 的趋势筛选与 TA-Lib 的历史阈值、位置条件和返回值不保证一致。",
+      "additionalLinks": [
+        {
+          "label": "白色光头光脚 - 看涨",
+          "url": "https://cn.tradingview.com/support/solutions/43000583786/"
+        }
+      ]
+    },
+    "CDLMATHOLD": {
+      "kind": "related",
+      "label": "自动K线形态检测（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000584462/",
+      "note": "未找到铺垫形态 Mat Hold的专门中文帮助条目。此文介绍自动 K 线形态检测；具体形态与 TA-Lib 检测条件仍以本页源码说明为准。"
+    },
+    "CDLRISEFALL3METHODS": {
+      "kind": "indicator",
+      "label": "下跌三法 - 看跌",
+      "url": "https://cn.tradingview.com/support/solutions/43000592712/",
+      "note": "用于认识形态；TradingView 的趋势筛选与 TA-Lib 的历史阈值、位置条件和返回值不保证一致。 上升三法文章目前在中文站显示英文正文，下跌三法文章为中文。",
+      "additionalLinks": [
+        {
+          "label": "上升三法 · 看涨（中文站暂为英文正文）",
+          "url": "https://cn.tradingview.com/support/solutions/43000592711/"
+        }
+      ]
+    },
+    "CDLSHOOTINGSTAR": {
+      "kind": "indicator",
+      "label": "射击之星 - 看跌",
+      "url": "https://cn.tradingview.com/support/solutions/43000583789/",
+      "note": "用于认识形态；TradingView 的趋势筛选与 TA-Lib 的历史阈值、位置条件和返回值不保证一致。"
+    },
+    "CDLSTALLEDPATTERN": {
+      "kind": "related",
+      "label": "自动K线形态检测（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000584462/",
+      "note": "未找到三阳停顿的专门中文帮助条目。此文介绍自动 K 线形态检测；具体形态与 TA-Lib 检测条件仍以本页源码说明为准。"
+    },
+    "CDLUPSIDEGAP2CROWS": {
+      "kind": "related",
+      "label": "自动K线形态检测（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000584462/",
+      "note": "未找到向上跳空两乌鸦的专门中文帮助条目。此文介绍自动 K 线形态检测；具体形态与 TA-Lib 检测条件仍以本页源码说明为准。"
+    },
+    "CMF": {
+      "kind": "indicator",
+      "label": "蔡金资金流量(CMF)",
+      "url": "https://cn.tradingview.com/support/solutions/43000501974/"
+    },
+    "CMO": {
+      "kind": "indicator",
+      "label": "钱德动量震荡指标 (CMO)",
+      "url": "https://cn.tradingview.com/support/solutions/43000589109/",
+      "note": "文章介绍滚动涨跌幅求和的 CMO；TA-Lib 的平滑方式与初始化以本页公式及实际库实现为准。"
+    },
+    "CORREL": {
+      "kind": "indicator",
+      "label": "相关系数(CC)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502022/",
+      "note": "文章常以两种资产价格举例；本策略的 TA-Lib 默认输入是同一品种的 high 和 low。"
+    },
+    "COS": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "COS 是余弦数学函数，输入单位为弧度。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "DEMA": {
+      "kind": "indicator",
+      "label": "双指数移动平均线 (EMA)",
+      "url": "https://cn.tradingview.com/support/solutions/43000589132/"
+    },
+    "DONCHIAN": {
+      "kind": "indicator",
+      "label": "唐奇安通道(Donchian Channels, DC)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502253/",
+      "note": "文章介绍唐奇安通道；本策略取价格在通道中的相对位置 DCP，而非直接使用上下轨价位。"
+    },
+    "EMA": {
+      "kind": "indicator",
+      "label": "指数移动平均线",
+      "url": "https://cn.tradingview.com/support/solutions/43000592270/"
+    },
+    "EXECUTION": {
+      "kind": "related",
+      "label": "时间加权平均价格（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000692939/",
+      "note": "TWAP 文章解释时间分散执行的思路与价格指标；本策略的分片数量、仓位回调与成交处理由源码定义。"
+    },
+    "FISHER_RSI": {
+      "kind": "related",
+      "label": "费雪变换 (Fisher Transform)（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000589141/",
+      "note": "本策略使用 RSI 的反费雪变换 tanh(0.1 × (RSI − 50))；文章介绍普通 Fisher Transform，输入、方向和输出尺度不同。"
+    },
+    "HEIKIN_ASHI": {
+      "kind": "indicator",
+      "label": "平均 K 线（Heikin Ashi）",
+      "url": "https://cn.tradingview.com/support/solutions/43000619436/"
+    },
+    "HT_DCPERIOD": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "HT_DCPERIOD 使用 Hilbert 滤波估计主周期长度。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "HT_PHASOR": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "HT_PHASOR 输出 Hilbert 同相与正交分量。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "HT_SINE": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "HT_SINE 根据 Hilbert 主周期相位输出正弦与领先正弦。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "HT_TRENDLINE": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "HT_TRENDLINE 是 Hilbert 瞬时趋势线。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "HT_TRENDMODE": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "HT_TRENDMODE 按 Hilbert 相关内部规则分类趋势与周期。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "ICHIMOKU": {
+      "kind": "indicator",
+      "label": "一目均衡表",
+      "url": "https://cn.tradingview.com/support/solutions/43000589152/",
+      "note": "文章介绍完整一目均衡表；本策略实际使用的线、位移及后续处理请以本卡片说明为准。"
+    },
+    "KELTNER": {
+      "kind": "indicator",
+      "label": "肯特纳通道(Keltner Channels, KC)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502266/",
+      "note": "文章介绍常见 EMA / ATR 版本；这里 Python ta 的 original_version 分支采用典型价 SMA 和原版通道公式，不能直接套用文章默认数值。"
+    },
+    "KST": {
+      "kind": "indicator",
+      "label": "KNOW SURE THING (KST)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502329/"
+    },
+    "LINEARREG": {
+      "kind": "indicator",
+      "label": "最小二乘移动平均线",
+      "url": "https://cn.tradingview.com/support/solutions/43000599877/",
+      "note": "LSMA 在 offset=0 时对应滚动回归线的末点拟合值；请把输入与周期改为策略中的设置。"
+    },
+    "MA": {
+      "kind": "indicator",
+      "label": "移动平均线",
+      "url": "https://cn.tradingview.com/support/solutions/43000502589/",
+      "note": "TA-Lib MA 可以选择均线类型；本策略默认 matype=0，即 SMA。"
+    },
+    "MACD": {
+      "kind": "indicator",
+      "label": "移动平均收敛/发散指标（MACD）",
+      "url": "https://cn.tradingview.com/support/solutions/43000502344/"
+    },
+    "MACDEXT": {
+      "kind": "related",
+      "label": "移动平均收敛/发散指标（MACD）（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000502344/",
+      "note": "MACDEXT 允许分别选择快线、慢线和信号线的均线类型；TA-Lib 默认均为 SMA，与常见 EMA 版 MACD 不同。"
+    },
+    "MACDFIX": {
+      "kind": "indicator",
+      "label": "移动平均收敛/发散指标（MACD）",
+      "url": "https://cn.tradingview.com/support/solutions/43000502344/",
+      "note": "MACDFIX 属于固定快慢参数的 MACD 变体；其平滑常数、初始化与信号线参数以 TA-Lib 实现为准。"
+    },
+    "MAMA": {
+      "kind": "related",
+      "label": "指数移动平均线（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000592270/",
+      "note": "未找到 MAMA / FAMA 的专门中文帮助条目。文章用于理解递推平滑；MAMA 的系数由 Hilbert 相位自适应决定，不是固定周期 EMA。"
+    },
+    "MAX": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "MAX 是输入序列的滚动最大值；这里输入是 close，不是 high。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "MA_RATIO": {
+      "kind": "related",
+      "label": "简单移动平均线（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000696841/",
+      "note": "本策略再对不同周期的 SMA 作比值比较；文章只解释基础均线，不包含自定义比值阈值。"
+    },
+    "MFI": {
+      "kind": "indicator",
+      "label": "资金流量指数 (MFI)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502348/"
+    },
+    "MIDPOINT": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "MIDPOINT 取窗口内同一输入序列的最高和最低值的中点，不是统计中位数。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "MIN": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "MIN 是输入序列的滚动最小值；这里输入是 close，不是 low。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "MINUS_DI": {
+      "kind": "indicator",
+      "label": "趋向指标(Directional Movement, DMI)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502250/",
+      "note": "DMI 文章同时介绍 +DI、−DI 和 ADX；此卡片对应其中的 −DI 分量。"
+    },
+    "MOM": {
+      "kind": "indicator",
+      "label": "动量 (Momentum)",
+      "url": "https://cn.tradingview.com/support/solutions/43000589187/"
+    },
+    "NORMALIZE": {
+      "kind": "related",
+      "label": "历史与实时结果差异、重绘（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000478429/",
+      "note": "这不是归一化公式教程。可结合文章理解历史结果改变的风险；本策略的具体问题是全样本 min/max 引入未来极值。"
+    },
+    "OBV": {
+      "kind": "indicator",
+      "label": "能量潮指标 (OBV)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502593/"
+    },
+    "OTT": {
+      "kind": "related",
+      "label": "钱德动量震荡指标 (CMO)（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000589109/",
+      "note": "OTT 是自定义跟踪线，CMO 仅用于决定自适应平滑强度；文章不包含 VAR、跟踪带或 shift(2) 的完整 OTT 规则。"
+    },
+    "PLUS_DI": {
+      "kind": "indicator",
+      "label": "趋向指标(Directional Movement, DMI)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502250/",
+      "note": "DMI 文章同时介绍 +DI、−DI 和 ADX；此卡片对应其中的 +DI 分量。"
+    },
+    "POWER": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "这里直接对价格取幂，不是 TradingView 的幂律模型指标。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "PRICE": {
+      "kind": "related",
+      "label": "图表类型与 OHLC（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000703407/",
+      "note": "这里是价格字段的位移、缩放与交叉。文章用于认识原始 K 线数据，具体运算以本页为准。"
+    },
+    "PRICE_ACTION": {
+      "kind": "related",
+      "label": "图表类型与 OHLC（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000703407/",
+      "note": "这里是自定义实体、影线、价格变化或历史比较。文章用于认识原始 K 线数据，具体运算以本页为准。"
+    },
+    "PRICE_CHANGE": {
+      "kind": "related",
+      "label": "动量 (Momentum)（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000589187/",
+      "note": "相邻收盘价差对应长度为 1 的价格动量；本策略在 3 小时周期计算，并另取绝对值用于绘图。"
+    },
+    "RATIO": {
+      "kind": "related",
+      "label": "唐奇安通道(Donchian Channels, DC)（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000502253/",
+      "note": "本策略把位移后的唐奇安通道位置除以肯特纳通道宽度；两篇文章仅解释组成通道，不包含此自定义比值与位移。",
+      "additionalLinks": [
+        {
+          "label": "肯特纳通道(Keltner Channels, KC)",
+          "url": "https://cn.tradingview.com/support/solutions/43000502266/"
+        }
+      ]
+    },
+    "REGIME": {
+      "kind": "related",
+      "label": "平均趋向指数(ADX)（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000589099/",
+      "note": "行情分类由 ADX、EMA、价格与带宽组合决定；文章仅解释其中的趋势强度，不代表该策略完整的行情分类。"
+    },
+    "ROC": {
+      "kind": "indicator",
+      "label": "变化率 (ROC)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502343/"
+    },
+    "RSI": {
+      "kind": "indicator",
+      "label": "相对强弱指数 (RSI)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502338/"
+    },
+    "SAR": {
+      "kind": "indicator",
+      "label": "抛物线 SAR (SAR)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502597/"
+    },
+    "SMA": {
+      "kind": "indicator",
+      "label": "简单移动平均线",
+      "url": "https://cn.tradingview.com/support/solutions/43000696841/"
+    },
+    "STOCH": {
+      "kind": "indicator",
+      "label": "随机指标 (STOCH)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502332/",
+      "note": "文章介绍 Slow / Full Stochastic 的计算思路；回看周期与 K、D 平滑周期请以本策略设置为准。"
+    },
+    "STOCHF": {
+      "kind": "indicator",
+      "label": "随机指标 (STOCH)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502332/",
+      "note": "STOCHF 的 FastK 是未平滑的区间位置，FastD 再对其平滑；对照文章时，K 平滑长度设为 1，回看窗口及 D 周期按本策略设置。"
+    },
+    "STOCHRSI": {
+      "kind": "indicator",
+      "label": "随机相对强弱指数 (STOCH RSI)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502333/",
+      "note": "TA-Lib 默认把 RSI 转成 0～100 的 FastK 并计算 FastD；文章的数值尺度、窗口和 K 线平滑可能不同，请按本卡片公式核对。"
+    },
+    "SUM": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "SUM 是滚动求和，不等于移动平均，也不是 ADD。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "SUPERTREND": {
+      "kind": "indicator",
+      "label": "超级趋势",
+      "url": "https://cn.tradingview.com/support/solutions/43000634738/",
+      "note": "文章使用 ATR 构造通道；本策略所用 technical 实现以 SMA(TR) 计算波幅，平滑方式不同，精确结果以源码为准。"
+    },
+    "SUPER_TREND": {
+      "kind": "indicator",
+      "label": "超级趋势",
+      "url": "https://cn.tradingview.com/support/solutions/43000634738/",
+      "note": "文章使用 ATR 构造通道；本策略所用 technical 实现以 SMA(TR) 计算波幅，平滑方式不同，精确结果以源码为准。"
+    },
+    "T3": {
+      "kind": "related",
+      "label": "指数移动平均线（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000592270/",
+      "note": "T3 由多层 EMA 与体积因子组合；文章仅解释基础 EMA，不是 T3 的完整公式，也不是 TEMA。"
+    },
+    "TA_FEATURES": {
+      "kind": "related",
+      "label": "TradingView 指标入门（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000543626/",
+      "note": "add_all_ta_features 是 Python ta 的批量特征生成器，没有单一对应指标。文章仅作指标分类入门，具体输出以库版本和源码为准。"
+    },
+    "TD_SETUP": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "此策略仅实现 TD setup 计数及局部条件，未实现标准 13 计数 countdown。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "TEMA": {
+      "kind": "indicator",
+      "label": "三重EMA",
+      "url": "https://cn.tradingview.com/support/solutions/43000591346/"
+    },
+    "TIME": {
+      "kind": "related",
+      "label": "交易时段（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000729030/",
+      "note": "文章解释交易时段与时区；本策略直接取 date.hour，不使用该时段指标，也不会自动处理跨午夜区间。"
+    },
+    "TRANGE": {
+      "kind": "related",
+      "label": "真实波幅均值(ATR)（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000501823/",
+      "note": "文章中的真实波幅 TR 是本指标；ATR 则是对多根 TR 再平滑，二者不能混作同一数值。"
+    },
+    "TRIMA": {
+      "kind": "related",
+      "label": "简单移动平均线（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000696841/",
+      "note": "三角均线由两次 SMA 组合，权重集中在窗口中部；文章解释基础 SMA，组合窗口以本页公式为准。"
+    },
+    "ULTOSC": {
+      "kind": "indicator",
+      "label": "终极震荡指标(Ultimate Oscillator, UO)",
+      "url": "https://cn.tradingview.com/support/solutions/43000502328/"
+    },
+    "UMACD": {
+      "kind": "related",
+      "label": "百分比价格震荡指标（PPO）（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000502346/",
+      "note": "自定义 UMACD=EMA12/EMA26−1，相当于对应 EMA 版 PPO 除以 100；本策略没有信号线，也不是 MACD 柱线。"
+    },
+    "VAR": {
+      "kind": "directory",
+      "label": "指标目录（查找入口）",
+      "url": "https://cn.tradingview.com/support/folders/43000587405/",
+      "note": "VAR 是滚动总体方差，不是历史收益率波动率。未找到对应的专门中文帮助条目；链接为官方指标目录，计算请参考本页公式和源码。"
+    },
+    "VOLUME": {
+      "kind": "indicator",
+      "label": "交易量",
+      "url": "https://cn.tradingview.com/support/solutions/43000591617/",
+      "note": "文章介绍成交量；本策略额外计算的均量、shift 位移和倍率阈值请以源码说明为准。"
+    },
+    "VOLUME_RATIO": {
+      "kind": "related",
+      "label": "相对交易量的计算（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000635874/",
+      "note": "文章的相对量使用过去 10 根 SMA，并排除当前 K 线；本策略分母为包含当根的 EMA20(volume)，定义不同。"
+    },
+    "WAVETREND": {
+      "kind": "related",
+      "label": "指数移动平均线（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000592270/",
+      "note": "未找到 WaveTrend 的专门中文帮助条目。EMA 是它的平滑基础；文章不包含该策略的偏离归一化、0.0015 系数及双线组合。"
+    },
+    "WCLPRICE": {
+      "kind": "related",
+      "label": "图表类型与 OHLC（相关概念）",
+      "url": "https://cn.tradingview.com/support/solutions/43000703407/",
+      "note": "WCLPRICE=(H+L+2C)/4 是单根加权价格，不是成交量加权均价。文章用于认识原始 K 线数据，具体运算以本页为准。"
+    },
+    "WILLR": {
+      "kind": "indicator",
+      "label": "威廉指标（Williams%R）",
+      "url": "https://cn.tradingview.com/support/solutions/43000501985/"
+    },
+    "WMA": {
+      "kind": "indicator",
+      "label": "加权移动平均线",
+      "url": "https://cn.tradingview.com/support/solutions/43000594680/"
+    }
+  },
+  "overrides": {
+    "AlmgrenChrissStrategy": {
+      "EXECUTION": {
+        "kind": "related",
+        "label": "时间加权平均价格（相关概念）",
+        "url": "https://cn.tradingview.com/support/solutions/43000692939/",
+        "note": "这里只借 TWAP 文章对照等额分片思路；本策略使用双曲正弦的不等额切片，文章不包含 Almgren–Chriss / κ 算法。"
+      }
+    },
+    "BreakEven": {
+      "EXECUTION": {
+        "kind": "related",
+        "label": "多空仓位与盈亏（相关概念）",
+        "url": "https://cn.tradingview.com/support/solutions/43000475660/",
+        "note": "这里按持仓时间设置收益退出门槛，没有 TWAP 分片。文章仅帮助理解入场、盈亏与止损价位，不包含本策略的 ROI 时间表。"
+      }
+    },
+    "FixedRiskRewardLoss": {
+      "EXECUTION": {
+        "kind": "related",
+        "label": "多空仓位与风险回报比（相关概念）",
+        "url": "https://cn.tradingview.com/support/solutions/43000475660/",
+        "note": "文章解释入场、止损、目标价与风险回报比；本策略的自定义止损回调及相对当前价的换算仍以源码为准。"
+      }
+    }
+  }
+}

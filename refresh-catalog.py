@@ -3,6 +3,7 @@ import ast
 import hashlib
 import json
 from pathlib import Path
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent
 BASE = ROOT / 'sources' / 'strategies'
@@ -51,11 +52,27 @@ def extract(path):
 
 
 def build():
+    help_catalog = json.loads((ROOT / 'indicator-help.json').read_text())
     lessons = {}
     for path in sorted((WEB / 'lessons').glob('*.json')):
         for lesson in json.loads(path.read_text()):
             if lesson['id'] in lessons:
                 raise ValueError(f'Duplicate lesson: {lesson["id"]}')
+            for indicator in lesson['indicators']:
+                key = indicator['key']
+                if key not in help_catalog['indicators']:
+                    raise ValueError(f'Missing indicator help review: {lesson["id"]}/{key}')
+                reference = {
+                    **help_catalog['indicators'][key],
+                    **help_catalog['overrides'].get(lesson['id'], {}).get(key, {}),
+                    **indicator.get('tradingView', {}),
+                }
+                for link in [reference, *reference.get('additionalLinks', [])]:
+                    url = urlparse(link['url'])
+                    if (url.scheme != 'https' or url.netloc != 'cn.tradingview.com'
+                            or not url.path.startswith('/support/') or not link['label']):
+                        raise ValueError(f'Invalid Chinese help link: {lesson["id"]}/{key}')
+                indicator['tradingView'] = reference
             lessons[lesson['id']] = lesson
     entries = [extract(path) for path in sorted(BASE.rglob('*.py'))]
     missing = [entry['id'] for entry in entries if entry['id'] not in lessons]

@@ -38,6 +38,7 @@ python3 -m http.server 8765 --bind 127.0.0.1
 - `sources/strategies/`：68 份上游策略源码快照；来源、修订和 GPL v3 许可说明见 `sources/README.md`，项目无需依赖旁边的 freqtrade-strategies 仓库。
 
 - `lessons/top.json` / `berlin.json` / `special.json`：逐篇人工研读内容、指标公式、优缺点、注意事项、源码行号。
+- `indicator-help.json`：全库指标对应的 TradingView 中文帮助链接。`indicators` 按指标键复用，`overrides` 保留策略特有的参考关系；单篇解读内的 `tradingView` 注释优先。`indicator` 表示对应指标文章，`related` 表示相关概念，`directory` 表示未找到专门条目、提供目录入口。蜡烛形态可用 `additionalLinks` 同时列出看涨与看跌文章。
 - `refresh-catalog.py`：递归读取 `sources/strategies/` 中的策略快照，利用 Python AST 提取类属性、参数声明、保存参数和方法源码；**不导入或执行策略**。
 - `catalog.js`：生成后的静态内容包，含完整源码与 SHA-256；浏览器无需 fetch，支持直接打开文件。
 - `index.html` / `app.js` / `model.js`：保留 Strategy001 专用内容与实验。
@@ -53,6 +54,8 @@ node --test model.test.js library.test.js
 ```
 
 新增或修改策略源码后，必须重新核对解读、默认参数、公式和行号，再刷新内容包。参数表将声明的 `default` 与 `buy_params / sell_params` 分列；它们不是实际加载 Freqtrade 后的最终值。外部参数文件、配置与库版本仍可能改变运行行为。源码中未声明的属性会明确显示未设置，不自动补造默认值。
+
+指标卡片中的中文帮助链接在新标签页打开。链接用于对照学习，参数与实现差异会在卡片上说明；自定义算法、数学运算或未找到专门中文文章的项目会明确标记参考范围，不把社区脚本当作官方帮助。新增指标键时也需更新链接映射，否则内容包生成会报错。Strategy001 使用静态专页，修改其链接时需同步 `index.html`。
 
 解读以代码事实为基础，适应场景和优缺点是规则推断。发现逻辑疑点不等于已经运行确认异常；需要环境或版本才能判断的地方在正文中保留限定。已知未来数据偏差的条目不能作为历史收益证据。
 

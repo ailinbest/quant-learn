@@ -25,7 +25,8 @@ function parameters(entry){return entry.parameters.map(p=>{
 function methodDetails(entry,names){return entry.methods.filter(m=>names.some(name=>m.name.includes(name))).map(m=>`<details class="source-excerpt"><summary>${esc(m.name)}() · L${m.line}</summary><pre><code>${esc(m.code)}</code></pre></details>`).join('');}
 function indicatorHelp(ind){
  const ref=ind.tradingView;if(!ref)return '';
- return `<div class="indicator-help"><a href="${esc(ref.url)}" target="_blank" rel="noopener noreferrer">TradingView 中文帮助 · ${esc(ref.label)} ↗</a>${ref.note?`<small>${esc(ref.note)}</small>`:''}</div>`;
+ const references=[ref,...(ref.additionalLinks||[])];
+ return `<div class="indicator-help">${references.map(link=>`<a href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">TradingView 中文帮助 · ${esc(link.label)} ↗</a>`).join('')}${ref.note?`<small>${esc(ref.note)}</small>`:''}</div>`;
 }
 function indicatorGuide(ind){
  const guide=ind.guide;if(!guide)return '';
