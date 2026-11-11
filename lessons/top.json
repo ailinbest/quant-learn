@@ -1527,12 +1527,20 @@
       {
         "key": "EMA",
         "usage": "close输入，20/50/100期分别参与买入和卖出。",
-        "formula": "EMAₜ=α×Pₜ+(1−α)×EMAₜ₋₁，α=2/(N+1)；TA-Lib 以起始N期均值初始化，默认输入close。"
+        "formula": "EMAₜ=α×Pₜ+(1−α)×EMAₜ₋₁，α=2/(N+1)；TA-Lib 以起始N期均值初始化，默认输入close。",
+        "tradingView": {
+          "label": "指数移动平均线",
+          "url": "https://cn.tradingview.com/support/solutions/43000592270/"
+        }
       },
       {
         "key": "HEIKIN_ASHI",
         "usage": "只取HA_Open和HA_Close作确认，不用其合成价格下单。",
-        "formula": "qtpylib平滑蜡烛，非TA-Lib：HA_Close=(O+H+L+C)/4；HA_Open=(前HA_Open+前HA_Close)/2，首根通常由(O+C)/2初始化。"
+        "formula": "qtpylib平滑蜡烛，非TA-Lib：HA_Close=(O+H+L+C)/4；HA_Open=(前HA_Open+前HA_Close)/2，首根通常由(O+C)/2初始化。",
+        "tradingView": {
+          "label": "平均 K 线（Heikin Ashi）",
+          "url": "https://cn.tradingview.com/support/solutions/43000619436/"
+        }
       }
     ],
     "strengths": [
@@ -1722,7 +1730,11 @@
       {
         "key": "RSI",
         "usage": "默认14期，买入低于30。",
-        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。"
+        "formula": "Δ=Pₜ−Pₜ₋₁；U=max(Δ,0)，D=max(−Δ,0)，以Wilder平滑求平均涨跌幅；RSI=100−100/(1+平均U/平均D)。",
+        "tradingView": {
+          "label": "相对强弱指数（RSI）",
+          "url": "https://cn.tradingview.com/support/solutions/43000502338/"
+        }
       },
       {
         "key": "STOCH",
@@ -1831,27 +1843,51 @@
               "url": "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/stochastic-oscillator-fast-slow-and-full"
             }
           ]
+        },
+        "tradingView": {
+          "label": "随机指标（STOCH）",
+          "url": "https://cn.tradingview.com/support/solutions/43000502332/",
+          "note": "文档默认回看 14 根，本策略回看 5 根；两者的 K、D 平滑周期均为 3。"
         }
       },
       {
         "key": "BBANDS",
         "usage": "qtpylib典型价20期、2σ；只使用下轨。",
-        "formula": "qtpylib：P=(H+L+C)/3，M=SMA20(P)，s=√[Σ(P−M)²/(n−1)]，上下轨=M±k×s；完整窗口n=20、标准差ddof=1。TA-Lib BBANDS常用close及总体标准差ddof=0，两者不可混作精确复现。"
+        "formula": "qtpylib：P=(H+L+C)/3，M=SMA20(P)，s=√[Σ(P−M)²/(n−1)]，上下轨=M±k×s；完整窗口n=20、标准差ddof=1。TA-Lib BBANDS常用close及总体标准差ddof=0，两者不可混作精确复现。",
+        "tradingView": {
+          "label": "布林带（BB）",
+          "url": "https://cn.tradingview.com/support/solutions/43000501840/",
+          "note": "用于理解布林带原理；本策略采用典型价与样本标准差，精确数值请按下方 QTPyLib 公式核对。"
+        }
       },
       {
         "key": "SAR",
         "usage": "默认加速0.02、上限0.2，用于退出。",
-        "formula": "趋势内递推SARₜ=SARₜ₋₁+AF×(EP−SARₜ₋₁)；EP为趋势极值，AF默认从0.02逐步增至0.2；结合前期高低点限幅，突破后翻转。"
+        "formula": "趋势内递推SARₜ=SARₜ₋₁+AF×(EP−SARₜ₋₁)；EP为趋势极值，AF默认从0.02逐步增至0.2；结合前期高低点限幅，突破后翻转。",
+        "tradingView": {
+          "label": "抛物线 SAR",
+          "url": "https://cn.tradingview.com/support/solutions/43000502597/"
+        }
       },
       {
         "key": "FISHER_RSI",
         "usage": "从RSI14转换，退出比较0.3。",
-        "formula": "源码自定义，非TA-Lib函数：x=0.1×(RSI−50)，F=(exp(2x)−1)/(exp(2x)+1)=tanh(x)；归一化值=50×(F+1)。"
+        "formula": "源码自定义，非TA-Lib函数：x=0.1×(RSI−50)，F=(exp(2x)−1)/(exp(2x)+1)=tanh(x)；归一化值=50×(F+1)。",
+        "tradingView": {
+          "label": "费雪变换（相关概念）",
+          "url": "https://cn.tradingview.com/support/solutions/43000589141/",
+          "note": "本文介绍普通 Fisher Transform。本策略使用 RSI 的反费雪变换 tanh(0.1 × (RSI − 50))，输入与公式不同，不能直接替代。"
+        }
       },
       {
         "key": "CDLHAMMER",
         "usage": "TA-Lib锤子形态，返回100才通过。",
-        "formula": "实体=|C−O|；下影=min(O,C)−L，上影=H−max(O,C)。TA-Lib同时检查小实体、长下影、很短上影和与前根低点相邻等相对历史平均阈值；不是固定下影/实体比，也不是收益概率。"
+        "formula": "实体=|C−O|；下影=min(O,C)−L，上影=H−max(O,C)。TA-Lib同时检查小实体、长下影、很短上影和与前根低点相邻等相对历史平均阈值；不是固定下影/实体比，也不是收益概率。",
+        "tradingView": {
+          "label": "锤形线 · 看涨",
+          "url": "https://cn.tradingview.com/support/solutions/43000583775/",
+          "note": "用于认识形态；TradingView 的趋势筛选与 TA-Lib CDLHAMMER 的识别规则并不相同。"
+        }
       }
     ],
     "strengths": [

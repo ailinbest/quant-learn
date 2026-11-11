@@ -858,6 +858,23 @@ h3 {
   color:var(--ink-secondary, #8a92a2);
   line-height:1.95
 }
+.indicator-help {
+  display:grid;
+  gap:6px;
+  margin-top:12px;
+  font-size:12px;
+  line-height:1.8;
+  overflow-wrap:anywhere;
+}
+.indicator-help a {
+  color:var(--blue);
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+.indicator-help small {
+  font-size:11px;
+  color:var(--ink-secondary, #8a92a2);
+}
 .formula {
   margin:18px 0;
   padding:16px;
