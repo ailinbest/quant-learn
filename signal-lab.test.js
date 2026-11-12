@@ -34,3 +34,13 @@ test('saved Strategy005 parameters, callback-only exits, and impossible exits re
 test('independent strategies do not silently reuse the same candles or signals',()=>{
  const hashes=entries.map(e=>crypto.createHash('sha256').update(JSON.stringify(fixture(e.id).cases[0].rows)).digest('hex'));assert.equal(new Set(hashes).size,68);
 });
+test('comparison scale preserves gaps and raw values, handles constants, and uses only the visible window',()=>{
+ const sandbox={window:{},document:{addEventListener(){}}};vm.runInNewContext(fs.readFileSync(path.join(root,'signal-lab.js'),'utf8'),sandbox);
+ const project=sandbox.window.SignalLab.plotValues;
+ const data=[...Array(200).fill(999999),10,null,20,30,NaN];
+ assert.equal(project(data,false),data);
+ const result=project(data,true);assert.deepEqual(Array.from(result.slice(200)),[0,null,50,100,null]);
+ assert.deepEqual(data.slice(200),[10,null,20,30,NaN]);
+ assert.deepEqual(Array.from(project([...Array(200).fill(null),7,7,null],true).slice(200)),[50,50,null]);
+ assert.ok(project(Array(320).fill(null),true).every(v=>v===null));
+});

@@ -2273,3 +2273,20 @@ nav a {
 .sl-parameters dt {font:11px/1.7 var(--mono);overflow-wrap:anywhere;}.sl-parameters dd {margin:0;text-align:right;overflow-wrap:anywhere;}.sl-parameters small {display:block;color:var(--ink-muted, #818797);}
 #sl-values span {overflow-wrap:anywhere;max-width:100%;}#sl-date {font-size:10px;white-space:normal;}
 @media(max-width:680px){.signal-lab{padding:12px;}.signal-lab .lab-toolbar{display:flex;align-items:flex-start;}.signal-lab .lab-toolbar label{width:100%;justify-content:space-between;}.signal-lab select{max-width:60%;}.sl-signals{grid-template-columns:repeat(2,minmax(0,1fr));}.sl-check-row{grid-template-columns:57px minmax(0,1fr) 42px;gap:6px;}.sl-parameters{grid-template-columns:1fr;}.signal-lab .chart-controls{flex-wrap:wrap;}#sl-date{width:100%;}}
+
+.signal-lab .sl-series-picker {position:relative;font-size:12px;max-width:100%;border:0;padding:0;margin:0;}
+.sl-series-picker>summary {padding:7px 10px;border:1px solid var(--border);border-radius:5px;white-space:nowrap;font-weight:400;}
+.sl-series-menu {position:absolute;top:calc(100% + 6px);left:0;width:290px;max-width:calc(100vw - 64px);padding:12px;background:var(--paper);border:1px solid var(--border);border-radius:7px;box-shadow:0 8px 25px #0002;z-index:5;}
+#sl-series {max-height:260px;overflow-y:auto;}
+.signal-lab .lab-toolbar .sl-series-option {display:flex;justify-content:flex-start;width:100%;padding:7px 4px;white-space:normal;cursor:pointer;gap:8px;}
+.sl-series-option span {overflow-wrap:anywhere;min-width:0;}
+.sl-series-option input {flex-shrink:0;}
+.sl-series-option i,.sl-series-legend i {display:inline-block;width:14px;height:3px;background:var(--series);flex-shrink:0;}
+.sl-series-actions {display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:5px;}
+.sl-series-actions button {border:0;background:transparent;color:var(--blue);padding:5px;font:inherit;cursor:pointer;}
+.sl-series-legend {display:flex;gap:8px;flex-wrap:wrap;font-size:11px;}
+.sl-series-legend button {display:flex;align-items:center;gap:6px;background:var(--inset-bg, #f6f7fb);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:5px 8px;font:inherit;max-width:100%;overflow-wrap:anywhere;cursor:pointer;}
+.sl-series-legend button span {color:var(--muted);}
+.sl-scale-note {font-size:11px;line-height:1.8;color:var(--ink-secondary, #657189);margin:10px 0 16px;}
+:root[data-theme="dark"] {--sl-series-lightness:68%;}
+@media(max-width:680px){.sl-series-picker{width:100%;}.sl-series-menu{width:100%;max-width:100%;}.signal-lab #sl-scale{max-width:68%;}}
