@@ -2236,3 +2236,40 @@ nav a {
 .topbar #breadcrumb {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .topbar .top-actions {flex-shrink:0;margin-left:12px;}
 .topbar #source-button {white-space:nowrap;}
+
+/* Source-derived, offline signal laboratory. */
+.signal-lab {padding:20px;min-width:0;}
+.signal-lab .lab-toolbar {padding:0 0 16px;flex-wrap:wrap;gap:14px;}
+.signal-lab .lab-toolbar label {display:flex;align-items:center;gap:8px;font-size:12px;min-width:0;white-space:nowrap;}
+.signal-lab select {max-width:230px;min-width:0;padding:7px;border:1px solid var(--border);border-radius:5px;background:var(--paper);color:var(--text);}
+.signal-lab .sl-merge {margin-left:auto;}
+.signal-lab .generic-chart {height:auto;aspect-ratio:auto;}
+.signal-lab .generic-chart svg {height:auto;}
+.sl-boundary {font-size:12px;line-height:1.8;color:var(--ink-secondary, #657189);padding:10px 14px;background:var(--inset-bg, #f6f7fb);border-radius:6px;}
+.sl-boundary p {margin:4px 0;}
+.sl-warning {color:var(--chart-down, #c7545e);}
+.sl-summary {margin:15px 0 10px;font-size:11px;line-height:1.8;color:var(--ink-muted, #818797);}
+.sl-legend {display:flex;flex-wrap:wrap;gap:8px 20px;font-size:11px;}
+.sl-enter_long {color:var(--chart-up, #188e78);}.sl-exit_long {color:var(--chart-down, #c7545e);}.sl-enter_short,.sl-exit_short {color:var(--chart-purple, #9461af);}
+.sl-legend b {font-family:var(--mono);}
+.generic-chart svg .sl-marker-label {fill:inherit;font-size:9px;font-weight:600;}
+.sl-events {display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0;}
+.sl-events button {padding:7px 10px;border:1px solid var(--border);background:var(--paper);border-radius:5px;color:var(--text);font-size:11px;}
+.sl-events button:disabled {opacity:.4;cursor:default;}
+.sl-events span {font-size:10px;color:var(--ink-muted, #818797);line-height:1.7;flex:1 1 230px;}
+.sl-signals {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0 20px;}
+.sl-signals>span {font-size:11px;padding:10px;border:1px solid var(--border);border-radius:5px;color:var(--ink-muted, #818797);}
+.sl-signals b {display:block;font-size:12px;margin-bottom:4px;}.sl-signals .active {border-color:currentColor;background:var(--inset-bg, #f6f7fb);}
+.sl-signals .active.sl-enter_long {color:var(--chart-up, #188e78);}.sl-signals .active.sl-exit_long {color:var(--chart-down, #c7545e);}.sl-signals .active.sl-enter_short,.sl-signals .active.sl-exit_short {color:var(--chart-purple, #9461af);}
+.sl-checks,.sl-inputs,.sl-provenance {border-top:1px solid var(--border);padding:14px 0;font-size:12px;line-height:1.8;}
+.signal-lab summary {cursor:pointer;font-weight:600;color:var(--text);}
+.sl-check-row {display:grid;grid-template-columns:70px minmax(0,1fr) 60px;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--border);}
+.sl-check-row code {display:block;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.7 var(--mono);}
+.sl-check-row small {display:block;color:var(--ink-muted, #818797);font-size:10px;}
+.sl-check-row .pass {color:var(--chart-up, #188e78);}.sl-check-row .fail {color:var(--ink-muted, #818797);}
+.sl-check-row .source-link {font-size:10px;}
+.sl-parameters {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px;}
+.sl-parameters>div {display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);padding:8px 0;min-width:0;}
+.sl-parameters dt {font:11px/1.7 var(--mono);overflow-wrap:anywhere;}.sl-parameters dd {margin:0;text-align:right;overflow-wrap:anywhere;}.sl-parameters small {display:block;color:var(--ink-muted, #818797);}
+#sl-values span {overflow-wrap:anywhere;max-width:100%;}#sl-date {font-size:10px;white-space:normal;}
+@media(max-width:680px){.signal-lab{padding:12px;}.signal-lab .lab-toolbar{display:flex;align-items:flex-start;}.signal-lab .lab-toolbar label{width:100%;justify-content:space-between;}.signal-lab select{max-width:60%;}.sl-signals{grid-template-columns:repeat(2,minmax(0,1fr));}.sl-check-row{grid-template-columns:57px minmax(0,1fr) 42px;gap:6px;}.sl-parameters{grid-template-columns:1fr;}.signal-lab .chart-controls{flex-wrap:wrap;}#sl-date{width:100%;}}

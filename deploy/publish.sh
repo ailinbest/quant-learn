@@ -19,8 +19,8 @@ umask 022
 mkdir -p "$releases"
 release=$(mktemp -d "$releases/$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")
 python3 "$repo/build-site.py" --output "$release"
-chmod 755 "$release"
-chmod 644 "$release"/*
+find "$release" -type d -exec chmod 755 {} \;
+find "$release" -type f -exec chmod 644 {} \;
 next=/var/www/.quant-learn-next-$$
 trap 'rm -f "$next"' EXIT HUP INT TERM
 ln -s "$release" "$next"

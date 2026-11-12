@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 dist/
 .playwright-mcp/
+.venv-chart/
+
+chart-lab/generation.log
+chart-lab/probe.json

@@ -1,0 +1,1947 @@
+{
+  "versions": {
+    "freqtrade": "2026.8",
+    "TA-Lib": "0.7.1",
+    "technical": "1.7.0",
+    "numpy": "2.2.6",
+    "pandas": "2.2.3",
+    "ta": "0.11.0"
+  },
+  "results": [
+    {
+      "id": "AlmgrenChrissStrategy",
+      "counts": [
+        {
+          "enter_long": 24,
+          "exit_long": 0,
+          "enter_short": 60,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 37,
+          "exit_long": 0,
+          "enter_short": 35,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 31,
+          "exit_long": 0,
+          "enter_short": 48,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "Bandtastic",
+      "counts": [
+        {
+          "enter_long": 53,
+          "exit_long": 3,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 30,
+          "exit_long": 10,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 83,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "BreakEven",
+      "counts": [
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "CustomStoplossWithPSAR",
+      "counts": [
+        {
+          "enter_long": 54,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 60,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 86,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "Diamond",
+      "counts": [
+        {
+          "enter_long": 34,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 25,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 8,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "FixedRiskRewardLoss",
+      "counts": [
+        {
+          "enter_long": 120,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 120,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 120,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": [
+        "源码未声明周期；此样例显式采用外部配置 timeframe=5m。"
+      ]
+    },
+    {
+      "id": "GodStra",
+      "counts": [
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": [
+        "兼容适配：已移除的 numpy.lib.math 别名映射到 Python math，未修改指标公式或交易条件。"
+      ]
+    },
+    {
+      "id": "Heracles",
+      "counts": [
+        {
+          "enter_long": 89,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 90,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 73,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "HourBasedStrategy",
+      "counts": [
+        {
+          "enter_long": 100,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 100,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 100,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "InformativeSample",
+      "counts": [
+        {
+          "enter_long": 81,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 21,
+          "exit_long": 26,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 66,
+          "exit_long": 36,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "MultiMa",
+      "counts": [
+        {
+          "enter_long": 32,
+          "exit_long": 115,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 36,
+          "exit_long": 80,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 61,
+          "exit_long": 120,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "PatternRecognition",
+      "counts": [
+        {
+          "enter_long": 20,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 23,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 22,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "PowerTower",
+      "counts": [
+        {
+          "enter_long": 0,
+          "exit_long": 120,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 120,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 120,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": [
+        "此样例使用约 0.1 的价格量纲，以展示幂运算或反三角函数对价格单位的敏感性。"
+      ]
+    },
+    {
+      "id": "Strategy001",
+      "counts": [
+        {
+          "enter_long": 2,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 3,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 1,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "Strategy001_custom_exit",
+      "counts": [
+        {
+          "enter_long": 2,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 2,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "Strategy002",
+      "counts": [
+        {
+          "enter_long": 1,
+          "exit_long": 19,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 14,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 14,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "Strategy003",
+      "counts": [
+        {
+          "enter_long": 3,
+          "exit_long": 10,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 6,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 10,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "Strategy004",
+      "counts": [
+        {
+          "enter_long": 6,
+          "exit_long": 1,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 4,
+          "exit_long": 2,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 12,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "Strategy005",
+      "counts": [
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "Supertrend",
+      "counts": [
+        {
+          "enter_long": 29,
+          "exit_long": 24,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 31,
+          "exit_long": 10,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 38,
+          "exit_long": 11,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "SwingHighToSky",
+      "counts": [
+        {
+          "enter_long": 9,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 19,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 28,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "TWAPStrategy",
+      "counts": [
+        {
+          "enter_long": 46,
+          "exit_long": 0,
+          "enter_short": 36,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 44,
+          "exit_long": 0,
+          "enter_short": 23,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 50,
+          "exit_long": 0,
+          "enter_short": 33,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "TrendRiderStrategy",
+      "counts": [
+        {
+          "enter_long": 11,
+          "exit_long": 8,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 11,
+          "exit_long": 6,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 4,
+          "exit_long": 6,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "UniversalMACD",
+      "counts": [
+        {
+          "enter_long": 31,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 13,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 34,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/ADXMomentum",
+      "counts": [
+        {
+          "enter_long": 54,
+          "exit_long": 24,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 3,
+          "exit_long": 51,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 13,
+          "exit_long": 32,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/ASDTSRockwellTrading",
+      "counts": [
+        {
+          "enter_long": 58,
+          "exit_long": 61,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 49,
+          "exit_long": 48,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 25,
+          "exit_long": 67,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/AdxSmas",
+      "counts": [
+        {
+          "enter_long": 8,
+          "exit_long": 5,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 9,
+          "exit_long": 3,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 8,
+          "exit_long": 4,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/AverageStrategy",
+      "counts": [
+        {
+          "enter_long": 5,
+          "exit_long": 5,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 3,
+          "exit_long": 3,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 3,
+          "exit_long": 4,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/AwesomeMacd",
+      "counts": [
+        {
+          "enter_long": 4,
+          "exit_long": 2,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 5,
+          "exit_long": 3,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 2,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/BbandRsi",
+      "counts": [
+        {
+          "enter_long": 7,
+          "exit_long": 26,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 10,
+          "exit_long": 7,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 10,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/BinHV27",
+      "counts": [
+        {
+          "enter_long": 12,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 5,
+          "exit_long": 10,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 4,
+          "exit_long": 28,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/BinHV45",
+      "counts": [
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/CCIStrategy",
+      "counts": [
+        {
+          "enter_long": 10,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 3,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": [
+          "resample_medium",
+          "resample_short",
+          "resample_long",
+          "resample_sma"
+        ]
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/CMCWinner",
+      "counts": [
+        {
+          "enter_long": 11,
+          "exit_long": 11,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 11,
+          "exit_long": 8,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 22,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/ClucMay72018",
+      "counts": [
+        {
+          "enter_long": 1,
+          "exit_long": 31,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 65,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 80,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/CofiBitStrategy",
+      "counts": [
+        {
+          "enter_long": 3,
+          "exit_long": 23,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 4,
+          "exit_long": 36,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 8,
+          "exit_long": 21,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/CombinedBinHAndCluc",
+      "counts": [
+        {
+          "enter_long": 1,
+          "exit_long": 41,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 62,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 42,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/DoesNothingStrategy",
+      "counts": [
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/EMASkipPump",
+      "counts": [
+        {
+          "enter_long": 18,
+          "exit_long": 3,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 12,
+          "exit_long": 3,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 23,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/Freqtrade_backtest_validation_freqtrade1",
+      "counts": [
+        {
+          "enter_long": 45,
+          "exit_long": 75,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 92,
+          "exit_long": 28,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 76,
+          "exit_long": 44,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/Low_BB",
+      "counts": [
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/MACDStrategy",
+      "counts": [
+        {
+          "enter_long": 40,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 7,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 39,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/MACDStrategy_crossed",
+      "counts": [
+        {
+          "enter_long": 1,
+          "exit_long": 1,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 2,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 1,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/MultiRSI",
+      "counts": [
+        {
+          "enter_long": 30,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 44,
+          "exit_long": 2,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 7,
+          "exit_long": 67,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/Quickie",
+      "counts": [
+        {
+          "enter_long": 21,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 20,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 31,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/ReinforcedAverageStrategy",
+      "counts": [
+        {
+          "enter_long": 4,
+          "exit_long": 5,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 6,
+          "exit_long": 6,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 6,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/ReinforcedQuickie",
+      "counts": [
+        {
+          "enter_long": 8,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 14,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 5,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": [
+          "resample_sma"
+        ]
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/ReinforcedSmoothScalp",
+      "counts": [
+        {
+          "enter_long": 2,
+          "exit_long": 1,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 1,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 5,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/Scalp",
+      "counts": [
+        {
+          "enter_long": 3,
+          "exit_long": 27,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 3,
+          "exit_long": 29,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 8,
+          "exit_long": 18,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/Simple",
+      "counts": [
+        {
+          "enter_long": 43,
+          "exit_long": 40,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 35,
+          "exit_long": 18,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 18,
+          "exit_long": 13,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/SmoothOperator",
+      "counts": [
+        {
+          "enter_long": 5,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 1,
+          "exit_long": 3,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 7,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/SmoothScalp",
+      "counts": [
+        {
+          "enter_long": 3,
+          "exit_long": 2,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 2,
+          "exit_long": 5,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 2,
+          "exit_long": 6,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/TDSequentialStrategy",
+      "counts": [
+        {
+          "enter_long": 21,
+          "exit_long": 2,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 16,
+          "exit_long": 9,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 12,
+          "exit_long": 3,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "berlinguyinca/TechnicalExampleStrategy",
+      "counts": [
+        {
+          "enter_long": 71,
+          "exit_long": 49,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 66,
+          "exit_long": 54,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 69,
+          "exit_long": 51,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "futures/FAdxSmaStrategy",
+      "counts": [
+        {
+          "enter_long": 0,
+          "exit_long": 55,
+          "enter_short": 1,
+          "exit_short": 55
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 54,
+          "enter_short": 1,
+          "exit_short": 54
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 87,
+          "enter_short": 0,
+          "exit_short": 87
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "futures/FOttStrategy",
+      "counts": [
+        {
+          "enter_long": 1,
+          "exit_long": 13,
+          "enter_short": 2,
+          "exit_short": 13
+        },
+        {
+          "enter_long": 5,
+          "exit_long": 0,
+          "enter_short": 5,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 4,
+          "exit_long": 7,
+          "enter_short": 4,
+          "exit_short": 7
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": [
+        "兼容适配：已移除的 numpy.lib.math 别名映射到 Python math，未修改指标公式或交易条件。"
+      ]
+    },
+    {
+      "id": "futures/FReinforcedStrategy",
+      "counts": [
+        {
+          "enter_long": 4,
+          "exit_long": 88,
+          "enter_short": 0,
+          "exit_short": 88
+        },
+        {
+          "enter_long": 2,
+          "exit_long": 90,
+          "enter_short": 2,
+          "exit_short": 90
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 82,
+          "enter_short": 5,
+          "exit_short": 82
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": [
+        "当前 Freqtrade 无法识别部分参数的 space；本图仅按源码声明 default 值计算规则，实际加载策略前需修复参数声明。"
+      ]
+    },
+    {
+      "id": "futures/FSampleStrategy",
+      "counts": [
+        {
+          "enter_long": 6,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 6
+        },
+        {
+          "enter_long": 5,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 5
+        },
+        {
+          "enter_long": 4,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 4
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "futures/FSupertrendStrategy",
+      "counts": [
+        {
+          "enter_long": 39,
+          "exit_long": 56,
+          "enter_short": 35,
+          "exit_short": 77
+        },
+        {
+          "enter_long": 55,
+          "exit_long": 51,
+          "enter_short": 21,
+          "exit_short": 103
+        },
+        {
+          "enter_long": 57,
+          "exit_long": 55,
+          "enter_short": 13,
+          "exit_short": 88
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "futures/TrendFollowingStrategy",
+      "counts": [
+        {
+          "enter_long": 14,
+          "exit_long": 0,
+          "enter_short": 15,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 12,
+          "exit_long": 0,
+          "enter_short": 12,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 9,
+          "exit_long": 0,
+          "enter_short": 9,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "futures/VolatilitySystem",
+      "counts": [
+        {
+          "enter_long": 1,
+          "exit_long": 3,
+          "enter_short": 3,
+          "exit_short": 1
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 1,
+          "enter_short": 1,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 1,
+          "enter_short": 1,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "hlhb",
+      "counts": [
+        {
+          "enter_long": 2,
+          "exit_long": 3,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 2,
+          "exit_long": 2,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 3,
+          "exit_long": 1,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "lookahead_bias/DevilStra",
+      "counts": [
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": [
+        "兼容适配：已移除的 numpy.lib.math 别名映射到 Python math，未修改指标公式或交易条件。"
+      ]
+    },
+    {
+      "id": "lookahead_bias/GodStraNew",
+      "counts": [
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": [
+        "此样例使用约 0.1 的价格量纲，以展示幂运算或反三角函数对价格单位的敏感性。",
+        "兼容适配：已移除的 numpy.lib.math 别名映射到 Python math，未修改指标公式或交易条件。"
+      ]
+    },
+    {
+      "id": "lookahead_bias/Zeus",
+      "counts": [
+        {
+          "enter_long": 0,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 23,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 36,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": [
+          "trend_kst_diff"
+        ]
+      },
+      "compatibility": [
+        "兼容适配：已移除的 numpy.lib.math 别名映射到 Python math，未修改指标公式或交易条件。"
+      ]
+    },
+    {
+      "id": "lookahead_bias/wtc",
+      "counts": [
+        {
+          "enter_long": 1,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 2,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 2,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": [
+          "wt1",
+          "wt2",
+          "slowk",
+          "def"
+        ]
+      },
+      "compatibility": []
+    },
+    {
+      "id": "mabStra",
+      "counts": [
+        {
+          "enter_long": 120,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 120,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 120,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    },
+    {
+      "id": "multi_tf",
+      "counts": [
+        {
+          "enter_long": 0,
+          "exit_long": 20,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 0,
+          "exit_long": 7,
+          "enter_short": 0,
+          "exit_short": 0
+        },
+        {
+          "enter_long": 15,
+          "exit_long": 0,
+          "enter_short": 0,
+          "exit_short": 0
+        }
+      ],
+      "audit": {
+        "originalSignalsMatch": true,
+        "prefixChanged": []
+      },
+      "compatibility": []
+    }
+  ]
+}
