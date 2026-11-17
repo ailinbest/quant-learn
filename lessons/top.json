@@ -2489,11 +2489,11 @@
     "entry": [
       {
         "label": "所有入口共同门槛",
-        "detail": "volume>0，BTC/USDT:USDT 1h RSI14>35，25≤fng_value≤85；fng_value固定50所以后两项恒通过。六路之间为OR，各路内部AND，后写入入口可能覆盖enter_tag。以下按buy_params载入EMA9/16、RSI16、pullback30～65、bounce35、ADX18、volume_factor0.7说明。"
+        "detail": "volume>0，BTC/USDT:USDT 1h RSI14>35，25≤fng_value≤85；fng_value固定50，所以FNG的上下界检查恒通过，BTC的RSI过滤仍须实际满足。六路之间为OR，各路内部AND，后写入入口可能覆盖enter_tag。以下按buy_params载入EMA9/16、RSI16、pullback30～65、bounce35、ADX18、volume_factor0.7说明。"
       },
       {
         "label": "①趋势回踩",
-        "detail": "is_bull=close>EMA200且EMA50>EMA200；low≤EMA16×1.02、close>EMA16、close>open；30<RSI16<65（且<70）；ADX14>18；V/EMA20(V)>0.7；+DI>−DI；OBV>EMA20(OBV)；close>日线EMA200。只有这路显式加日线过滤。"
+        "detail": "is_bull=close>EMA200且EMA50>EMA200；low≤EMA16×1.02、close>EMA16、close>open；30<RSI16<65（且<70）；ADX14>18；V/EMA20(V)>0.7；+DI>−DI；OBV>EMA20(OBV)；仅当日线EMA200列存在时追加close>日线EMA200。只有这路显式加此过滤。"
       },
       {
         "label": "②EMA50支撑",

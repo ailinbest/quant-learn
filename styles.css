@@ -2290,3 +2290,32 @@ nav a {
 .sl-scale-note {font-size:11px;line-height:1.8;color:var(--ink-secondary, #657189);margin:10px 0 16px;}
 :root[data-theme="dark"] {--sl-series-lightness:68%;}
 @media(max-width:680px){.sl-series-picker{width:100%;}.sl-series-menu{width:100%;max-width:100%;}.signal-lab #sl-scale{max-width:68%;}}
+
+/* Plain-language entry lessons share the existing light/dark palette. */
+.entry-guide{padding:26px;margin-bottom:22px;min-width:0}
+.entry-guide-header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.entry-guide-header h3{margin:8px 0 0;font-size:21px;line-height:1.5}
+.entry-guide-header .source-link{font-size:12px;white-space:normal}
+.entry-guide-intro{font-size:15px;line-height:1.9;margin:18px 0;color:var(--text)}
+.entry-steps summary,.entry-glossary summary{cursor:pointer;color:var(--blue);font-size:13px;font-weight:600;padding:12px 0}
+.entry-steps ol{counter-reset:entry-step;list-style:none;padding:0;margin:8px 0 22px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.entry-steps li{counter-increment:entry-step;padding:18px;border:1px solid var(--border);border-radius:10px;background:var(--bg);min-width:0}
+.entry-steps h4{font-size:14px;line-height:1.7;margin:0 0 9px;color:var(--text)}
+.entry-steps h4::before{content:counter(entry-step,decimal-leading-zero) ' / ';color:var(--blue);font-family:var(--mono);font-size:12px}
+.entry-steps p,.entry-examples p,.entry-trap p,.indicator-plain p{font-size:13px;line-height:1.9;margin:0;overflow-wrap:anywhere}
+.entry-examples{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.entry-examples>div{padding:16px;border-left:3px solid var(--green);background:var(--bg);border-radius:0 8px 8px 0}
+.entry-examples>div+div{border-left-color:var(--red)}
+.entry-examples span{display:block;color:var(--green);font-size:13px;font-weight:700;margin-bottom:8px}
+.entry-examples>div+div span{color:var(--red)}
+.entry-example-note{font-size:12px;color:var(--muted);line-height:1.8;margin:12px 0 20px}
+.entry-trap{border-top:1px solid var(--border);padding-top:18px}
+.entry-trap strong,.indicator-plain strong{display:block;font-size:12px;color:var(--blue);margin-bottom:8px}
+.entry-glossary{margin-top:12px;border-bottom:1px solid var(--border)}
+.entry-glossary dl{margin:4px 0 16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.entry-glossary dt{font-size:13px;font-weight:600;margin-bottom:6px}
+.entry-glossary dd{margin:0;font-size:12px;line-height:1.8;color:var(--muted)}
+.entry-lab-link{display:inline-block;margin-top:18px;font-size:13px;color:var(--blue)}
+.indicator-plain{padding:14px 16px;margin:14px 0;background:var(--bg);border-left:3px solid var(--blue);border-radius:0 8px 8px 0}
+.indicator-plain p{color:var(--text)}
+@media(max-width:700px){.entry-guide{padding:18px}.entry-steps ol,.entry-examples,.entry-glossary dl{grid-template-columns:minmax(0,1fr)}.entry-guide-header h3{font-size:18px}.entry-steps li{padding:15px}}

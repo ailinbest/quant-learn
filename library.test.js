@@ -23,3 +23,17 @@ test('true range includes gaps, not just candle body',()=>{assert.deepEqual(mode
 test('all teaching chart kinds have finite visible data across all scenarios',()=>{for(const kind of ['ema','bbands','rsi','macd','adx','sar','supertrend','execution','price'])for(const scenario of ['reversal','range','fall']){const d=model.calculate(kind,scenario);assert.equal(d.rows.length,320);for(const series of [...d.overlays,...d.oscillators])assert.ok(series.data.slice(200).every(Number.isFinite),`${kind}/${scenario}/${series.label}`);for(const r of d.rows){assert.ok(r.high>=Math.max(r.open,r.close));assert.ok(r.low<=Math.min(r.open,r.close));}}});
 test('causal indicator prefix stays fixed when future prices change',()=>{const rows=model.series(),a=rows.map(r=>r.close),b=[...a.slice(0,280),...a.slice(280).map(v=>v*5)];assert.deepEqual(model.ema(a,20).slice(0,280),model.ema(b,20).slice(0,280));assert.deepEqual(model.rsi(a).slice(0,280),model.rsi(b).slice(0,280));});
 test('global normalization counterexample demonstrably changes the past',()=>{const a=[10,16,11,15,13,12,30];close(model.normalize(a,6)[5],1/3);close(model.normalize(a,7)[5],.1);assert.notEqual(model.normalize(a,6)[5],model.normalize(a,7)[5]);});
+
+test('entry teaching covers every source and cannot silently drift from the code or shared indicator definitions',()=>{
+ const c=readCatalog(),guides=JSON.parse(fs.readFileSync(path.join(__dirname,'entry-guides.json'),'utf8')),primers=JSON.parse(fs.readFileSync(path.join(__dirname,'indicator-primers.json'),'utf8'));
+ assert.deepEqual(Object.keys(guides).sort(),Array.from(c.strategies).sort());
+ const used=new Set();
+ for(const e of c.entries){
+  const g=e.lesson.entryGuide;
+  assert.equal(g.sourceHash,e.sha256,`${e.id}: guide refers to different source`);
+  assert.deepEqual(JSON.parse(JSON.stringify(g)),guides[e.id],`${e.id}: generated bundle is stale`);
+  assert.ok(e.methods.some(m=>m.name==='populate_entry_trend'||m.name==='populate_buy_trend'),`${e.id}: missing source destination`);
+  for(const ind of e.lesson.indicators){used.add(ind.key);assert.equal(ind.plain,primers[ind.key],`${e.id}/${ind.key}: stale primer`);}
+ }
+ assert.deepEqual([...used].sort(),Object.keys(primers).sort());
+});
